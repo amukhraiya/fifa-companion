@@ -41,6 +41,8 @@ model FanMemory {
   accessibilityNeeds   String?
   seatPreference       String?
   atmospherePreference String?
+  matchInterests       Json?    // Array of match interests (e.g. GroupStage, Knockouts)
+  fanProfile           String?  // Derived fan segment profile
   groupType            String?
   pastTicketsSummary   String?
   travelHistorySummary String?

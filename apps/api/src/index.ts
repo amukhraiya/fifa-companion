@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import { logger } from './lib/logger';
 import { healthRouter } from './routes/health';
 import { authRouter } from './routes/auth';
+import { usersRouter } from './routes/users';
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 // Route registration
 app.use('/api/v1', healthRouter);
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/users', usersRouter);
 
 // Wildcard 404 handler
 app.use((_req: Request, res: Response) => {
