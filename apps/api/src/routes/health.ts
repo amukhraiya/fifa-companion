@@ -4,7 +4,7 @@ import { env } from '@fifa/config';
 import { logger } from '../lib/logger';
 import { createApiResponseSchema, HealthStatusSchema } from '@fifa/shared-types';
 
-export const healthRouter = Router();
+export const healthRouter: Router = Router();
 
 const healthResponseSchema = createApiResponseSchema(HealthStatusSchema);
 

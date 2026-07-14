@@ -1,4 +1,4 @@
-import baseConfig from '../ui/tailwind.config';
+import baseConfig from '@fifa/ui/tailwind.config';
 import type { Config } from 'tailwindcss';
 
 const config: Config = {
