@@ -1,3 +1,4 @@
+
 # FIFA AI Companion — Monorepo
 
 Welcome to the FIFA AI Companion project. This monorepo is built using Turborepo and `pnpm` workspaces, establishing a production-grade infrastructure that supports Next.js 15 for the web frontend, Express for the backend API, Prisma ORM for database mapping, and structured configurations.
@@ -105,3 +106,7 @@ Based on **Architecture v2**, the FIFA AI Companion adheres to these core archit
 3.  **Explicit RAG Retrieval Layer:** Context documents are ingested, split into chunks, and matched using `pgvector` embeddings configured to **768 dimensions** (aligned with Gemini Pro).
 4.  **Reusable Tool Registry:** All custom tools implement a standard `execute(input)` signature and schema validation to maintain agent independence.
 5.  **Event Bus System:** Inter-agent events propagate via an in-process pub-sub system.
+=======
+# fifa-companion
+This is an AI based application for users to easily enjoy the fifa worldcup this year
+
