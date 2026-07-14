@@ -1,0 +1,3 @@
+# Tool Schema Prompt - Version 1
+Define the arguments contract for executing this tool.
+Schema validation is run before executing.

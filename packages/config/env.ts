@@ -13,6 +13,11 @@ const envSchema = z.object({
   PORT: z.string().transform((val) => parseInt(val, 10)).default('3001'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   JWT_SECRET: z.string().default('default_jwt_secret_change_me_in_production'),
+  FIREBASE_PROJECT_ID: z.string().default('mock-project-id'),
+  FIREBASE_CLIENT_EMAIL: z.string().default('mock-client-email'),
+  FIREBASE_PRIVATE_KEY: z.string().default('mock-private-key'),
+  FIREBASE_API_KEY: z.string().default('mock-api-key'),
+  AUTH_PROVIDER: z.enum(['firebase', 'mock']).default('mock'),
 });
 
 // For build-time compilation where env vars might not be present, we can bypass strict validation

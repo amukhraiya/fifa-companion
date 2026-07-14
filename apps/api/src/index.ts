@@ -1,13 +1,16 @@
 import { env } from '@fifa/config'; // Fail-fast environment check on startup
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import { logger } from './lib/logger';
 import { healthRouter } from './routes/health';
+import { authRouter } from './routes/auth';
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 
 // Request logging middleware
 app.use((req: Request, _res: Response, next: NextFunction) => {
@@ -17,6 +20,7 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 
 // Route registration
 app.use('/api/v1', healthRouter);
+app.use('/api/v1/auth', authRouter);
 
 // Wildcard 404 handler
 app.use((_req: Request, res: Response) => {

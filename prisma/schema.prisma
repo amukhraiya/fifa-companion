@@ -12,8 +12,9 @@ datasource db {
 model User {
   id            String             @id @default(uuid())
   email         String             @unique
-  passwordHash  String
-  role          String             @default("Fan") // "Fan" | "Admin"
+  passwordHash  String?            // Nullable for OAuth-only users
+  firebaseUid   String?            @unique // Nullable for Guest users
+  role          String             @default("Fan") // "Guest" | "Fan" | "Volunteer" | "Organizer" | "Admin"
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
   memory        FanMemory?
@@ -22,6 +23,9 @@ model User {
   travelPlans   TravelPlan[]
   notifications Notification[]
   events        Event[]
+  sessions      Session[]
+  refreshTokens RefreshToken[]
+  auditLogs     AuditLog[]
 }
 
 model FanMemory {
@@ -41,6 +45,38 @@ model FanMemory {
   pastTicketsSummary   String?
   travelHistorySummary String?
   updatedAt            DateTime @updatedAt
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userAgent String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
+
+model RefreshToken {
+  id              String   @id @default(uuid())
+  token           String   @unique // Store SHA-256 hash of token
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt       DateTime
+  createdAt       DateTime @default(now())
+  revoked         Boolean  @default(false)
+  replacedByToken String?  // Stores token that replaced it during rotation
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String   // e.g. "LOGIN" | "LOGOUT" | "REGISTER" | "FAILED_LOGIN" | "TOKEN_REFRESH" | "GUEST_LOGIN" | "UPGRADE_GUEST"
+  ipAddress String?
+  userAgent String?
+  details   String?
+  createdAt DateTime @default(now())
 }
 
 model ConversationTurn {
