@@ -6,6 +6,7 @@ import { logger } from './lib/logger';
 import { healthRouter } from './routes/health';
 import { authRouter } from './routes/auth';
 import { usersRouter } from './routes/users';
+import { chatRouter } from './routes/chat';
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 app.use('/api/v1', healthRouter);
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/users', usersRouter);
+app.use('/api/v1/chat', chatRouter);
 
 // Wildcard 404 handler
 app.use((_req: Request, res: Response) => {

@@ -6,6 +6,7 @@ import {
   IObservabilityService,
   IMemoryService,
   IRAGProvider,
+  IGeminiService,
 } from '../interfaces';
 
 export class Kernel implements IKernel {
@@ -15,6 +16,7 @@ export class Kernel implements IKernel {
   observability: IObservabilityService;
   memoryService: IMemoryService;
   ragProvider: IRAGProvider;
+  geminiService: IGeminiService;
 
   constructor(init: {
     agentRegistry: IAgentRegistry;
@@ -23,6 +25,7 @@ export class Kernel implements IKernel {
     observability: IObservabilityService;
     memoryService: IMemoryService;
     ragProvider: IRAGProvider;
+    geminiService: IGeminiService;
   }) {
     this.agentRegistry = init.agentRegistry;
     this.toolRegistry = init.toolRegistry;
@@ -30,5 +33,6 @@ export class Kernel implements IKernel {
     this.observability = init.observability;
     this.memoryService = init.memoryService;
     this.ragProvider = init.ragProvider;
+    this.geminiService = init.geminiService;
   }
 }

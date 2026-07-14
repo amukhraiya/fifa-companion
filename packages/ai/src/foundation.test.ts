@@ -8,6 +8,7 @@ import { PromptManager } from './prompts';
 import { ObservabilityService } from './trace';
 import { MasterAgent } from './master-agent';
 import { IAgent, ITool, ToolMetadata, IKernel } from './interfaces';
+import { MockGeminiService } from './gemini';
 
 // -------------------------------------------------------------
 // Mocks for Tests
@@ -31,8 +32,15 @@ const mockAgent: IAgent = {
   version: '1.0.0',
   description: 'Handles seat bookings',
   capabilities: ['booking'],
+  priority: 10,
   execute: async (_context, _kernel) => {
-    return { message: 'Booking processed successfully.' };
+    return {
+      agentName: 'TestBookingAgent',
+      success: true,
+      data: { message: 'Booking processed successfully.' },
+      confidence: 0.95,
+      reasoning: 'Mock processed ticket booking.',
+    };
   },
 };
 
@@ -120,6 +128,7 @@ describe('3. Execution Planner Tests', () => {
       observability: new ObservabilityService(),
       memoryService: new MockMemoryService(),
       ragProvider: new MockRAGProvider(),
+      geminiService: new MockGeminiService(),
     };
     kernel.agentRegistry.registerAgent(mockAgent);
 
@@ -170,6 +179,7 @@ describe('6. Observability and Master Agent Tests', () => {
       observability: new ObservabilityService(),
       memoryService: new MockMemoryService(),
       ragProvider: new MockRAGProvider(),
+      geminiService: new MockGeminiService(),
     };
     kernel.agentRegistry.registerAgent(mockAgent);
 

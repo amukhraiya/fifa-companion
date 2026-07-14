@@ -12,6 +12,9 @@ export interface ISessionContext {
   conversationState: Record<string, unknown>;
   authenticationState: boolean;
   fanMemory: Record<string, unknown> | null; // Snapshot of FanMemory, avoids repeating DB reads
+  conversationId: string;
+  executionId: string;
+  promptVersion: string;
 }
 
 // -------------------------------------------------------------
@@ -35,9 +38,12 @@ export interface ITool {
 // -------------------------------------------------------------
 // 3. Agent Interface (Exposing metadata & execute)
 // -------------------------------------------------------------
-export interface AgentResponse {
-  message: string;
-  payload?: Record<string, unknown>;
+export interface AgentResult {
+  agentName: string;
+  success: boolean;
+  data: Record<string, unknown>;
+  confidence: number;
+  reasoning: string;
 }
 
 export interface IAgent {
@@ -45,7 +51,8 @@ export interface IAgent {
   version: string;
   description: string;
   capabilities: string[]; // Dynamically checked capabilities
-  execute(context: ISessionContext, kernel: IKernel): Promise<AgentResponse>;
+  priority: number;       // Execution priority weighting
+  execute(context: ISessionContext, kernel: IKernel): Promise<AgentResult>;
 }
 
 // -------------------------------------------------------------
@@ -113,16 +120,21 @@ export interface IToolRegistry {
 // -------------------------------------------------------------
 export interface AgentTrace {
   executionId: string;
+  conversationId: string;
   timestamp: string;
   intent: string;
   agent: string;
   tools: string[];
+  toolCalls: Array<{ toolName: string; duration: number; success: boolean }>;
   memoryReads: string[];
+  memoryInjected: boolean;
   ragReads: string[];
   executionTime: number;
   success: boolean;
   confidence: number;
   reasoningPath: string[];
+  promptVersion: string;
+  latency: number;
 }
 
 export interface IObservabilityService {
@@ -155,6 +167,10 @@ export interface IExecutionPlanner {
   plan(userMessage: string, context: ISessionContext, kernel: IKernel): Promise<ExecutionPlan>;
 }
 
+export interface IGeminiService {
+  generateCompletion(prompt: string, options?: { temperature?: number }): Promise<string>;
+}
+
 // -------------------------------------------------------------
 // 10. AI Kernel Interface
 // -------------------------------------------------------------
@@ -165,4 +181,5 @@ export interface IKernel {
   observability: IObservabilityService;
   memoryService: IMemoryService;
   ragProvider: IRAGProvider;
+  geminiService: IGeminiService;
 }

@@ -9,6 +9,10 @@ export * from './kernel';
 export * from './memory';
 export * from './rag';
 export * from './events';
+export * from './gemini';
+export * from './safety';
+export * from './synthesizer';
+export * from './conversation';
 
 // Sub-agent stubs
 export * from './agents/booking';

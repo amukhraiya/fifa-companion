@@ -11,16 +11,21 @@ export class ObservabilityService implements IObservabilityService {
 
     this.traces.set(executionId, {
       executionId,
+      conversationId: '',
       timestamp: new Date().toISOString(),
       intent,
       agent,
       tools: [],
+      toolCalls: [],
       memoryReads: [],
+      memoryInjected: false,
       ragReads: [],
       executionTime: 0,
       success: false,
       confidence: 0,
       reasoningPath: [],
+      promptVersion: 'v1',
+      latency: 0,
     });
 
     return executionId;
@@ -68,6 +73,7 @@ export class ObservabilityService implements IObservabilityService {
 
     if (startTime) {
       trace.executionTime = Date.now() - startTime;
+      trace.latency = trace.executionTime;
     }
 
     trace.success = success;

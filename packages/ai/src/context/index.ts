@@ -9,6 +9,9 @@ export class SessionContext implements ISessionContext {
   conversationState: Record<string, unknown> = {};
   authenticationState: boolean = false;
   fanMemory: Record<string, unknown> | null = null; // Snapshot of FanMemory, avoids repeating DB reads
+  conversationId: string = '';
+  executionId: string = '';
+  promptVersion: string = 'v1';
 
   constructor(init?: Partial<ISessionContext>) {
     if (init) {

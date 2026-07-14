@@ -27,4 +27,16 @@ export class PromptManager {
       throw new Error(`Failed to read prompt file: ${msg}`);
     }
   }
+
+  /**
+   * Replaces placeholders in prompt templates with actual context values.
+   */
+  renderPrompt(template: string, context: Record<string, unknown>): string {
+    let result = template;
+    for (const [key, value] of Object.entries(context)) {
+      const placeholder = `{{${key}}}`;
+      result = result.split(placeholder).join(String(value ?? ''));
+    }
+    return result;
+  }
 }
