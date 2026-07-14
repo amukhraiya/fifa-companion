@@ -38,6 +38,11 @@ vi.mock('../lib/db', () => ({
     knowledgeChunk: {
       findMany: vi.fn().mockResolvedValue([]),
     },
+    event: {
+      findMany: vi.fn().mockResolvedValue([
+        { id: 'ev-1', eventType: 'SeatLocked', payload: '{}', createdAt: new Date() }
+      ]),
+    },
   },
 }));
 
@@ -79,5 +84,14 @@ describe('Chat REST Route Tests', () => {
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(res.body.data.trace.executionId).toBe(traceId);
+  });
+
+  it('should successfully retrieve live Event Bus timeline events', async () => {
+    const res = await request(app).get('/api/v1/chat/debug/events');
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.length).toBeGreaterThan(0);
+    expect(res.body.data[0].eventType).toBe('SeatLocked');
   });
 });

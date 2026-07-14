@@ -1,9 +1,10 @@
 import { IAgent, ISessionContext, IKernel, AgentResult } from '../../interfaces';
+import { aiSeatRecommendationEngine } from '../../engine/recommendation';
 
 export class BookingAgent implements IAgent {
   name = 'BookingAgent';
   version = '1.0.0';
-  description = 'Handles match ticket booking and seat selection.';
+  description = 'Handles match ticket booking and seat recommendations.';
   capabilities = ['booking'];
   priority = 10;
 
@@ -21,27 +22,39 @@ export class BookingAgent implements IAgent {
       };
     }
 
-    // Simulate tool usage through registry
-    const seats = await kernel.toolRegistry.executeTool('SearchSeats', {});
-    const bookingResult = await kernel.toolRegistry.executeTool('ReserveSeat', {
-      seatId: 'seat-B2',
-      userId: context.currentUser?.id || 'guest-100',
-    });
+    try {
+      // 1. Fetch seats from tool search
+      const seats = (await kernel.toolRegistry.executeTool('SearchSeats', {})) as Parameters<
+        typeof aiSeatRecommendationEngine.recommendSeats
+      >[1];
 
-    return {
-      agentName: this.name,
-      success: true,
-      data: {
-        seats,
-        bookingResult,
-        recommendedMatch: 'Brazil vs Spain',
-        preferKnockoutMatches: true,
-        category: 'Category 2',
-        budgetInBounds: true,
-        travelDurationMinutes: 18,
-      },
-      confidence: 0.95,
-      reasoning: 'Discovered available seats and successfully reserved Category 2 seat seat-B2 matching budget.',
-    };
+      // 2. Generate recommendations from engine
+      const recommendations = await aiSeatRecommendationEngine.recommendSeats(context, seats);
+
+      const topRec = recommendations[0];
+
+      return {
+        agentName: this.name,
+        success: true,
+        data: {
+          recommendations,
+          topRecommendation: topRec || null,
+          seatsCount: seats.length,
+        },
+        confidence: topRec ? topRec.confidence : 0.8,
+        reasoning: topRec
+          ? `Recommended seat ${topRec.row}-${topRec.number} in ${topRec.section} at ${topRec.stadiumName} (Confidence: ${topRec.confidence}).`
+          : 'No available seat matches found.',
+      };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'BookingAgent execution failed';
+      return {
+        agentName: this.name,
+        success: false,
+        data: { error: msg },
+        confidence: 0.0,
+        reasoning: `BookingAgent execution aborted: ${msg}`,
+      };
+    }
   }
 }

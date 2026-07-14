@@ -72,4 +72,6 @@ eventLogger.register(eventBus);
 // 4. Initialize Conversation Lifecycle Service (Refinement 1)
 const conversationService = new ConversationService(kernel);
 
-export { authService, eventBus, memoryService, conversationService, kernel };
+import { reservationService } from '../services/reservation.service';
+
+export { authService, eventBus, memoryService, conversationService, kernel, reservationService };

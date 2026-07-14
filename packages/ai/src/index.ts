@@ -19,3 +19,5 @@ export * from './agents/booking';
 export * from './agents/travel';
 export * from './agents/matchCompanion';
 export * from './tools';
+export * from './engine/recommendation';
+export * from './engine/matchDiscovery';

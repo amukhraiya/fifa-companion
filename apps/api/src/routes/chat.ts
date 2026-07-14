@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { z } from 'zod';
 import { RequireAuth, AuthenticatedRequest } from '../middleware/auth';
 import { conversationService, kernel } from '../lib/di';
+import { prisma } from '../lib/db';
 
 export const chatRouter = Router();
 
@@ -96,6 +97,33 @@ chatRouter.get(
       });
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'Trace fetch failed';
+      res.status(400).json({
+        success: false,
+        error: { code: 'BAD_REQUEST', message: msg },
+      });
+    }
+  },
+);
+
+// -------------------------------------------------------------
+// GET /api/v1/chat/debug/events (Event Bus logging timelines)
+// -------------------------------------------------------------
+chatRouter.get(
+  '/debug/events',
+  RequireAuth,
+  async (_req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const events = await prisma.event.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 30,
+      });
+
+      res.status(200).json({
+        success: true,
+        data: events,
+      });
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Events fetch failed';
       res.status(400).json({
         success: false,
         error: { code: 'BAD_REQUEST', message: msg },

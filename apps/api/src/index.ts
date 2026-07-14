@@ -7,6 +7,7 @@ import { healthRouter } from './routes/health';
 import { authRouter } from './routes/auth';
 import { usersRouter } from './routes/users';
 import { chatRouter } from './routes/chat';
+import { bookingRouter } from './routes/booking';
 
 const app = express();
 
@@ -14,9 +15,9 @@ app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 
-// Request logging middleware
+// Custom request logger middleware
 app.use((req: Request, _res: Response, next: NextFunction) => {
-  logger.info({ method: req.method, url: req.url }, 'Incoming HTTP Request');
+  logger.info(`[${req.method}] ${req.url}`);
   next();
 });
 
@@ -25,6 +26,7 @@ app.use('/api/v1', healthRouter);
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/users', usersRouter);
 app.use('/api/v1/chat', chatRouter);
+app.use('/api/v1/booking', bookingRouter);
 
 // Wildcard 404 handler
 app.use((_req: Request, res: Response) => {
