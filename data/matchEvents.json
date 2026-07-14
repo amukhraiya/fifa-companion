@@ -1,0 +1,62 @@
+[
+  {
+    "minute": 0,
+    "type": "KICKOFF",
+    "description": "Match begins at Lusail Stadium.",
+    "players": []
+  },
+  {
+    "minute": 23,
+    "type": "GOAL",
+    "description": "Lionel Messi scores from the penalty spot. Argentina 1 - 0 France.",
+    "players": ["Lionel Messi"]
+  },
+  {
+    "minute": 36,
+    "type": "GOAL",
+    "description": "Angel Di Maria scores after a brilliant counter-attack. Argentina 2 - 0 France.",
+    "players": ["Angel Di Maria", "Lionel Messi"]
+  },
+  {
+    "minute": 80,
+    "type": "GOAL",
+    "description": "Kylian Mbappe scores from the penalty spot. Argentina 2 - 1 France.",
+    "players": ["Kylian Mbappe"]
+  },
+  {
+    "minute": 81,
+    "type": "GOAL",
+    "description": "Kylian Mbappe scores a stunning volley to equalize! Argentina 2 - 2 France.",
+    "players": ["Kylian Mbappe"]
+  },
+  {
+    "minute": 90,
+    "type": "FULLTIME",
+    "description": "Regular time ends. The match goes to extra time. Argentina 2 - 2 France.",
+    "players": []
+  },
+  {
+    "minute": 108,
+    "type": "GOAL",
+    "description": "Lionel Messi scores from close range. Argentina 3 - 2 France.",
+    "players": ["Lionel Messi"]
+  },
+  {
+    "minute": 118,
+    "type": "GOAL",
+    "description": "Kylian Mbappe completes his hat-trick from the penalty spot! Argentina 3 - 3 France.",
+    "players": ["Kylian Mbappe"]
+  },
+  {
+    "minute": 120,
+    "type": "SHOOTOUT",
+    "description": "Extra time ends. The World Cup winner will be decided by penalties. Argentina 3 - 3 France.",
+    "players": []
+  },
+  {
+    "minute": 125,
+    "type": "PENALTY_SHOOTOUT_WIN",
+    "description": "Argentina wins 4 - 2 on penalties. Argentina are the World Champions!",
+    "players": ["Lionel Messi", "Emiliano Martinez", "Gonzalo Montiel"]
+  }
+]

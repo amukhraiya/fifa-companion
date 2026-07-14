@@ -1,0 +1,18 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+allowBuilds:
+  '@prisma/client': set this to true or false
+  '@prisma/engines': set this to true or false
+  esbuild: set this to true or false
+  prisma: set this to true or false
+  sharp: set this to true or false
+  unrs-resolver: set this to true or false
+minimumReleaseAgeExclude:
+  - '@turbo/darwin-64@2.10.5'
+  - '@turbo/darwin-arm64@2.10.5'
+  - '@turbo/linux-64@2.10.5'
+  - '@turbo/linux-arm64@2.10.5'
+  - '@turbo/windows-64@2.10.5'
+  - '@turbo/windows-arm64@2.10.5'
+  - turbo@2.10.5

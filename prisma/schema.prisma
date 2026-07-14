@@ -1,0 +1,192 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgvector(map: "vector")]
+}
+
+model User {
+  id            String             @id @default(uuid())
+  email         String             @unique
+  passwordHash  String
+  role          String             @default("Fan") // "Fan" | "Admin"
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  memory        FanMemory?
+  turns         ConversationTurn[]
+  tickets       Ticket[]
+  travelPlans   TravelPlan[]
+  notifications Notification[]
+  events        Event[]
+}
+
+model FanMemory {
+  id                   String   @id @default(uuid())
+  userId               String   @unique
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  favoriteTeam         String?
+  favoritePlayers      Json?    // Array of player names/ids
+  language             String   @default("en")
+  budget               Float?
+  travelStyle          String?
+  foodPreference       String?
+  accessibilityNeeds   String?
+  seatPreference       String?
+  atmospherePreference String?
+  groupType            String?
+  pastTicketsSummary   String?
+  travelHistorySummary String?
+  updatedAt            DateTime @updatedAt
+}
+
+model ConversationTurn {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String   // "user" | "assistant" | "system"
+  content   String
+  agentUsed String?
+  timestamp DateTime @default(now())
+}
+
+model City {
+  id          String       @id @default(uuid())
+  name        String       @unique
+  venues      Venue[]
+  restaurants Restaurant[]
+}
+
+model Venue {
+  id      String  @id @default(uuid())
+  name    String  @unique
+  cityId  String
+  city    City    @relation(fields: [cityId], references: [id])
+  matches Match[]
+  info    String? // Text description of venue & stadium map
+}
+
+model Team {
+  id      String      @id @default(uuid())
+  name    String      @unique
+  players Player[]
+  matches MatchTeam[]
+}
+
+model Player {
+  id     String @id @default(uuid())
+  name   String
+  teamId String
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+}
+
+model Match {
+  id      String      @id @default(uuid())
+  venueId String
+  venue   Venue       @relation(fields: [venueId], references: [id])
+  date    DateTime
+  teams   MatchTeam[]
+  seats   Seat[]
+}
+
+model MatchTeam {
+  matchId String
+  match   Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  teamId  String
+  team    Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@id([matchId, teamId])
+}
+
+model Seat {
+  id      String    @id @default(uuid())
+  matchId String
+  match   Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  section String
+  row     String
+  number  String
+  price   Float
+  status  String    @default("Available") // "Available" | "Locked" | "Reserved"
+  lock    SeatLock?
+  ticket  Ticket?
+
+  @@unique([matchId, section, row, number])
+}
+
+model SeatLock {
+  id        String   @id @default(uuid())
+  seatId    String   @unique
+  seat      Seat     @relation(fields: [seatId], references: [id], onDelete: Cascade)
+  lockedAt  DateTime @default(now())
+  expiresAt DateTime
+}
+
+model Ticket {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seatId    String   @unique
+  seat      Seat     @relation(fields: [seatId], references: [id])
+  paymentId String?  @unique
+  payment   Payment? @relation(fields: [paymentId], references: [id])
+  qrCode    String?  // Cryptographic signature
+  createdAt DateTime @default(now())
+}
+
+model Payment {
+  id                     String   @id @default(uuid())
+  amount                 Float
+  status                 String   // "Pending" | "Succeeded" | "Failed"
+  stripePaymentIntentId  String   @unique
+  ticket                 Ticket?
+  createdAt              DateTime @default(now())
+}
+
+model TravelPlan {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itinerary Json     // Itinerary stops
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Event {
+  id        String   @id @default(uuid())
+  userId    String?  // Nullable for system events
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  eventType String   // e.g. "BookingCompleted" | "PaymentFailed"
+  payload   Json
+  createdAt DateTime @default(now())
+}
+
+model KnowledgeChunk {
+  id         String                     @id @default(uuid())
+  sourceType String                     // "VenueInfo" | "HostCityGuide" | "FifaFAQ" | "EmergencyInfo" | "RestaurantInfo" | "MatchInfo"
+  title      String
+  content    String
+  metadata   Json
+  embedding  Unsupported("vector(768)")? // Gemini Pro embedding dimensions (768)
+}
+
+model Restaurant {
+  id          String   @id @default(uuid())
+  name        String
+  cityId      String?
+  city        City?    @relation(fields: [cityId], references: [id])
+  dietaryTags Json     // e.g. ["vegan", "halal"]
+  priceTier   String   // "$", "$$", "$$$"
+  rating      Float?
+}

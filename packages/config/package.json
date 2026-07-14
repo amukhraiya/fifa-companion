@@ -1,0 +1,21 @@
+{
+  "name": "@fifa/config",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./dist/env.js",
+  "types": "./dist/env.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint env.ts",
+    "test": "echo 'no tests'"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "@types/node": "^20.14.9"
+  }
+}
