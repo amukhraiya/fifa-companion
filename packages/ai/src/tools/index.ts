@@ -533,3 +533,183 @@ export class NewsTool extends BaseTool<{ team?: string }, { articles: string[] }
     };
   }
 }
+
+// -------------------------------------------------------------
+// 4. Match Day Companion Tools
+// -------------------------------------------------------------
+export interface StadiumNavigationOutput {
+  routeDescription: string;
+  distanceMeters: number;
+  estimatedMinutes: number;
+  pathCoordinates: Array<{ x: number; y: number }>;
+  accessibleElevatorUsed: boolean;
+}
+
+export class StadiumNavigationTool extends BaseTool<
+  { currentPosition: string; destination: string; accessibilityMode?: boolean },
+  StadiumNavigationOutput
+> {
+  name = 'StadiumNavigation';
+  description = 'Computes stadium interior navigation instructions, elevator routes, and path mapping.';
+  schema = z.object({
+    currentPosition: z.string(),
+    destination: z.string(),
+    accessibilityMode: z.boolean().optional(),
+  });
+
+  async execute(input: { currentPosition: string; destination: string; accessibilityMode?: boolean }): Promise<StadiumNavigationOutput> {
+    const isAccessible = input.accessibilityMode || false;
+    return {
+      routeDescription: isAccessible
+        ? `Wheelchair accessible route: Proceed to Elevator Lift Section 112, ascend to Level 2 Concourse, exit left to seat.`
+        : `Walk along the main concourse block 112, take staircase C to Level 2 seating aisle.`,
+      distanceMeters: isAccessible ? 150 : 120,
+      estimatedMinutes: isAccessible ? 4 : 2,
+      pathCoordinates: [
+        { x: 300, y: 150 },
+        { x: 280, y: 110 },
+        { x: 230, y: 220 },
+      ],
+      accessibleElevatorUsed: isAccessible,
+    };
+  }
+}
+
+export interface EmergencyOutput {
+  boothName: string;
+  locationDetails: string;
+  status: string;
+  emergencyContact: string;
+  urgentInstructions: string;
+}
+
+export class EmergencyTool extends BaseTool<
+  { type: 'medical' | 'security' | 'lost-found' | 'police' | 'child-help'; stadiumId: string },
+  EmergencyOutput
+> {
+  name = 'EmergencyCheck';
+  description = 'Retrieves nearest safety stations, security posts, child-assist tables, and police hotspots.';
+  schema = z.object({
+    type: z.enum(['medical', 'security', 'lost-found', 'police', 'child-help']),
+    stadiumId: z.string(),
+  });
+
+  async execute(input: { type: 'medical' | 'security' | 'lost-found' | 'police' | 'child-help'; stadiumId: string }): Promise<EmergencyOutput> {
+    const contacts: Record<string, string> = {
+      medical: '+974 4400 9999',
+      security: '+974 4400 9911',
+      police: '+974 4400 9922',
+      'lost-found': '+974 4400 9933',
+      'child-help': '+974 4400 9944',
+    };
+
+    const details: Record<string, { boothName: string; locationDetails: string; instructions: string }> = {
+      medical: {
+        boothName: 'First Aid Trauma Station Adjacent to Section 115',
+        locationDetails: 'Main concourse next to block 115 entrance.',
+        instructions: 'Medical dispatch notified. Stand by at your current coordinates.',
+      },
+      security: {
+        boothName: 'Security Desk Block B',
+        locationDetails: 'Next to East Gate Ticketing.',
+        instructions: 'Security unit dispatched. Speak with the nearest steward.',
+      },
+      police: {
+        boothName: 'Lusail Stadium Police Depot',
+        locationDetails: 'Ground floor administration block.',
+        instructions: 'Local law enforcement notified.',
+      },
+      'lost-found': {
+        boothName: 'Spectator Services Lost & Found Point',
+        locationDetails: 'Main concourse desk at Section 102.',
+        instructions: 'Proceed to Section 102 desk to report items.',
+      },
+      'child-help': {
+        boothName: 'Family Support and Lost Child Station',
+        locationDetails: 'Section 108 play zone concourse.',
+        instructions: 'Steward team alerted. Please remain at your seat with the child.',
+      },
+    };
+
+    const choice = details[input.type] || details.medical;
+
+    return {
+      boothName: choice.boothName,
+      locationDetails: choice.locationDetails,
+      status: 'DISPATCHED',
+      emergencyContact: contacts[input.type] || '+974 4400 9999',
+      urgentInstructions: choice.instructions,
+    };
+  }
+}
+
+export interface TranslationOutput {
+  originalText: string;
+  translatedText: string;
+  languageDetected: string;
+}
+
+export class TranslationTool extends BaseTool<
+  { text: string; targetLanguage: 'English' | 'Spanish' | 'Portuguese' | 'French' | 'Hindi' | 'Arabic' },
+  TranslationOutput
+> {
+  name = 'TranslateText';
+  description = 'Translates match reports, security warnings, and commentary between multilingual fan profiles.';
+  schema = z.object({
+    text: z.string(),
+    targetLanguage: z.enum(['English', 'Spanish', 'Portuguese', 'French', 'Hindi', 'Arabic']),
+  });
+
+  async execute(input: { text: string; targetLanguage: 'English' | 'Spanish' | 'Portuguese' | 'French' | 'Hindi' | 'Arabic' }): Promise<TranslationOutput> {
+    const translations: Record<string, Record<string, string>> = {
+      'Brazil are moving the ball efficiently across the midfield line.': {
+        Spanish: 'Brasil está moviendo el balón de manera eficiente en la línea del mediocampo.',
+        Portuguese: 'O Brasil está movendo a bola eficientemente pela linha do meio-campo.',
+        French: 'Le Brésil déplace le ballon efficacement sur la ligne médiane.',
+        Hindi: 'ब्राजील मिडफील्ड लाइन पर कुशलतापूर्वक गेंद को आगे बढ़ा रहा है।',
+        Arabic: 'البرازيل تنقل الكرة بكفاءة عبر خط الوسط.',
+      },
+      'Spain are pressing aggressively.': {
+        Spanish: 'España está presionando agresivamente.',
+        Portuguese: 'A Espanha está pressionando agressivamente.',
+        French: 'L\'Espagne presse agressivement.',
+        Hindi: 'स्पेन आक्रामक तरीके से दबाव बना रहा है।',
+        Arabic: 'إسبانيا تضغط بقوة.',
+      },
+    };
+
+    const matches = translations[input.text];
+    const translatedText = matches?.[input.targetLanguage] || `[${input.targetLanguage}] ${input.text}`;
+
+    return {
+      originalText: input.text,
+      translatedText,
+      languageDetected: 'English',
+    };
+  }
+}
+
+export interface ReplayGuidanceOutput {
+  cameraAngles: string[];
+  replayAvailable: boolean;
+  bestSeatAngle: string;
+  clipDurationSeconds: number;
+}
+
+export class ReplayGuidanceTool extends BaseTool<{ matchId: string; eventType: string }, ReplayGuidanceOutput> {
+  name = 'ReplayGuidance';
+  description = 'Provides multi-angle stadium camera viewing guidelines and instant replay highlights.';
+  schema = z.object({
+    matchId: z.string(),
+    eventType: z.string(),
+  });
+
+  async execute(_input: { matchId: string; eventType: string }): Promise<ReplayGuidanceOutput> {
+    return {
+      cameraAngles: ['Main Stand Wide Cam 1', 'Tactical Sky Cam 2', 'Goalmouth Close-up Cam 3', 'Spidercam Altitude 4'],
+      replayAvailable: true,
+      bestSeatAngle: 'Goalmouth Close-up Cam 3 (Section 112)',
+      clipDurationSeconds: 15,
+    };
+  }
+}

@@ -27,6 +27,10 @@ import {
   HotelTool,
   MedicalTool,
   CrowdPredictionTool,
+  StadiumNavigationTool,
+  EmergencyTool,
+  TranslationTool,
+  ReplayGuidanceTool,
 } from '@fifa/ai';
 
 let authService: IAuthService;
@@ -69,6 +73,10 @@ toolRegistry.registerTool(new StadiumGuideTool());
 toolRegistry.registerTool(new HotelTool());
 toolRegistry.registerTool(new MedicalTool());
 toolRegistry.registerTool(new CrowdPredictionTool());
+toolRegistry.registerTool(new StadiumNavigationTool());
+toolRegistry.registerTool(new EmergencyTool());
+toolRegistry.registerTool(new TranslationTool());
+toolRegistry.registerTool(new ReplayGuidanceTool());
 
 // 2. Register Agents (Refinement 3)
 agentRegistry.registerAgent(new BookingAgent());

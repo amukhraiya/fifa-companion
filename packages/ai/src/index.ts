@@ -22,3 +22,8 @@ export * from './tools';
 export * from './engine/recommendation';
 export * from './engine/matchDiscovery';
 export * from './engine/travelRecommendation';
+export * from './engine/liveMatch';
+export * from './engine/commentary';
+export * from './engine/fanPulse';
+export * from './engine/matchPredictor';
+export * from './engine/types';

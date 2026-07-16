@@ -205,6 +205,29 @@ export default function CommandCenterPage() {
               </div>
             </div>
           </section>
+
+          {/* Matchday Companion Diagnostic */}
+          <section className="bg-slate-900/40 border border-slate-800 rounded-3xl p-6 space-y-6">
+            <h2 className="text-xl font-bold text-white">Live Match Companion State</h2>
+            <div className="space-y-4 text-xs text-slate-350">
+              <div className="flex justify-between border-b border-slate-850 pb-2">
+                <span>Match Predictor Win %:</span>
+                <span className="text-amber-500 font-bold">BRA 95% - DRAW 3% - ESP 2%</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-850 pb-2">
+                <span>Fan Sentiment / decibels:</span>
+                <span className="text-emerald-400 font-bold">Ecstatic (118 dB)</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-850 pb-2">
+                <span>Last Live Commentary:</span>
+                <span className="text-slate-400 italic">&ldquo;Vinicius Jr counters Spain to lead 2-1&rdquo;</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-850 pb-2">
+                <span>Timeline Decisions Logged:</span>
+                <span className="text-cyan-400 font-mono">4 items</span>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </main>
