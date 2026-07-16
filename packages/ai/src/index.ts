@@ -21,3 +21,4 @@ export * from './agents/matchCompanion';
 export * from './tools';
 export * from './engine/recommendation';
 export * from './engine/matchDiscovery';
+export * from './engine/travelRecommendation';

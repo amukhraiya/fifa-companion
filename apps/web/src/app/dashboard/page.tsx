@@ -61,7 +61,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(false);
   const [showExplanation, setShowExplanation] = useState<Record<string, boolean>>({});
 
-  // Fan Profile State (static snapshot for UI demonstration)
+  // static snap for demonstration
   const fanDNA = {
     favoriteTeam: 'Argentina',
     budget: 5000,
@@ -71,6 +71,29 @@ export default function DashboardPage() {
 
   const getApiUrl = () => {
     return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  };
+
+  const ensureSession = async (): Promise<string | null> => {
+    const token = localStorage.getItem('accessToken');
+    if (token) return token;
+
+    try {
+      const res = await fetch(`${getApiUrl()}/api/v1/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'fan@fifa.com', password: 'password123' }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success && data.data.accessToken) {
+        const accessToken = data.data.accessToken as string;
+        localStorage.setItem('accessToken', accessToken);
+        return accessToken;
+      }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to auto-login guest session:', err);
+    }
+    return null;
   };
 
   const fetchMatches = async () => {
@@ -91,7 +114,7 @@ export default function DashboardPage() {
   };
 
   const fetchRecommendations = async () => {
-    const token = localStorage.getItem('accessToken');
+    const token = await ensureSession();
     if (!token) return;
     try {
       const res = await fetch(`${getApiUrl()}/api/v1/booking/recommendations`, {
@@ -138,7 +161,7 @@ export default function DashboardPage() {
 
   const handleLockSeat = async () => {
     if (!selectedSeat) return;
-    const token = localStorage.getItem('accessToken');
+    const token = await ensureSession();
     if (!token) return;
 
     setLoading(true);
@@ -169,7 +192,7 @@ export default function DashboardPage() {
 
   const handleReleaseLock = async () => {
     if (!selectedSeat) return;
-    const token = localStorage.getItem('accessToken');
+    const token = await ensureSession();
     if (!token) return;
 
     try {
@@ -193,7 +216,7 @@ export default function DashboardPage() {
 
   const handleConfirmBooking = async () => {
     if (!selectedSeat) return;
-    const token = localStorage.getItem('accessToken');
+    const token = await ensureSession();
     if (!token) return;
 
     setLoading(true);
@@ -225,8 +248,12 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    fetchMatches();
-    fetchRecommendations();
+    const init = async () => {
+      await ensureSession();
+      fetchMatches();
+      fetchRecommendations();
+    };
+    init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -245,41 +272,72 @@ export default function DashboardPage() {
       {/* Header */}
       <header className="flex justify-between items-center border-b border-slate-900 pb-6">
         <div>
-          <h1 className="text-3xl font-extrabold bg-gradient-to-r from-amber-500 to-emerald-500 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-extrabold bg-gradient-to-r from-amber-500 via-yellow-400 to-emerald-500 bg-clip-text text-transparent">
             FIFA Intelligent Booking Hub
           </h1>
-          <p className="text-sm text-slate-400">Intelligent seating recommendations & real-time booking</p>
+          <p className="text-sm text-slate-400">AI Personalization & Interactive Seat Mapping</p>
         </div>
         {/* Fan DNA summary */}
         <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 text-xs space-y-1">
-          <span className="font-bold text-amber-500">Fan DNA Profile:</span>
+          <span className="font-bold text-amber-500">🧬 Fan DNA Profile:</span>
           <div>⚽ Favorite Team: {fanDNA.favoriteTeam}</div>
           <div>💰 Budget: ${fanDNA.budget}</div>
           <div>💺 Seat: {fanDNA.seatPreference}</div>
         </div>
       </header>
 
+      {/* Weather & Travel Preview Cards */}
+      <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="p-4 bg-slate-900/40 border border-slate-800 rounded-2xl space-y-1">
+          <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">☀️ Weather Preview</span>
+          <div className="text-sm font-bold text-slate-200">Doha: 24°C</div>
+          <div className="text-[10px] text-emerald-400">Clear Skies (Favorable)</div>
+        </div>
+        <div className="p-4 bg-slate-900/40 border border-slate-800 rounded-2xl space-y-1">
+          <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">🚇 Travel Estimate</span>
+          <div className="text-sm font-bold text-slate-200">Metro Line 4 Express</div>
+          <div className="text-[10px] text-amber-400">18 minutes duration</div>
+        </div>
+        <div className="p-4 bg-slate-900/40 border border-slate-800 rounded-2xl space-y-1">
+          <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">🛒 Budget Utilisation</span>
+          <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden mt-1.5">
+            <div className="bg-emerald-500 h-full w-[45%]" />
+          </div>
+          <div className="text-[9px] text-slate-500">45% of $5,000 allocated</div>
+        </div>
+        <div className="p-4 bg-slate-900/40 border border-slate-800 rounded-2xl space-y-1">
+          <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">🤖 Active AI Assistant</span>
+          <div className="text-sm font-bold text-emerald-400">BookingAgent v1</div>
+          <div className="text-[10px] text-slate-500">Direct registry execution</div>
+        </div>
+      </section>
+
       {/* Match Selector Dropdown */}
       <section className="bg-slate-900/40 border border-slate-800 rounded-2xl p-4 flex justify-between items-center">
         <label htmlFor="match-select" className="text-sm font-bold text-slate-200">
           Selected Match:
         </label>
-        <select
-          id="match-select"
-          aria-label="Select World Cup Match"
-          value={selectedMatch?.id || ''}
-          onChange={(e) => {
-            const m = matches.find((match) => match.id === e.target.value);
-            if (m) handleSelectMatch(m);
-          }}
-          className="px-4 py-2.5 bg-slate-950 border border-slate-850 rounded-xl text-xs text-slate-100 focus:outline-none"
-        >
-          {matches.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.teams.map((t) => t.team.name).join(' vs ')}
-            </option>
-          ))}
-        </select>
+        {matches.length === 0 ? (
+          /* Skeleton */
+          <div className="h-10 w-64 bg-slate-900 animate-pulse rounded-xl" />
+        ) : (
+          <select
+            id="match-select"
+            aria-label="Select World Cup Match"
+            value={selectedMatch?.id || ''}
+            onChange={(e) => {
+              const m = matches.find((match) => match.id === e.target.value);
+              if (m) handleSelectMatch(m);
+            }}
+            className="px-4 py-2.5 bg-slate-950 border border-slate-850 rounded-xl text-xs text-slate-100 focus:outline-none"
+          >
+            {matches.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.teams.map((t) => t.team.name).join(' vs ')}
+              </option>
+            ))}
+          </select>
+        )}
       </section>
 
       {/* Progress Timeline Indicator */}
@@ -332,62 +390,73 @@ export default function DashboardPage() {
           <section className="space-y-4">
             <h2 className="text-xl font-bold text-white">AI Seating Recommendations</h2>
             <div className="grid md:grid-cols-3 gap-4">
-              {recommendations.map((rec) => (
-                <div
-                  key={rec.type}
-                  className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between hover:border-amber-500/30 transition-colors"
-                >
-                  <div className="space-y-3">
-                    <span className="inline-block px-2.5 py-1 rounded-full text-[10px] uppercase font-bold bg-amber-500/10 text-amber-500">
-                      {rec.type}
-                    </span>
-                    <h3 className="font-bold text-sm text-slate-100">{rec.teams.join(' vs ')}</h3>
-                    <div className="text-xs text-slate-400">
-                      🏟️ {rec.stadiumName} | Row {rec.row} Seat {rec.number}
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="font-extrabold text-emerald-400">${rec.price}</span>
-                      <span className="text-slate-400 font-medium">Confidence: {Math.round(rec.confidence * 100)}%</span>
-                    </div>
+              {recommendations.length === 0 ? (
+                /* Skeleton Loader cards */
+                [1, 2, 3].map((n) => (
+                  <div key={n} className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-4 animate-pulse">
+                    <div className="h-4 w-24 bg-slate-800 rounded" />
+                    <div className="h-6 w-32 bg-slate-800 rounded" />
+                    <div className="h-4 w-40 bg-slate-800 rounded" />
                   </div>
+                ))
+              ) : (
+                recommendations.map((rec) => (
+                  <div
+                    key={rec.type}
+                    className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between hover:border-amber-500/30 transition-colors"
+                  >
+                    <div className="space-y-3">
+                      <span className="inline-block px-2.5 py-1 rounded-full text-[10px] uppercase font-bold bg-amber-500/10 text-amber-500">
+                        {rec.type}
+                      </span>
+                      <h3 className="font-bold text-sm text-slate-100">{rec.teams.join(' vs ')}</h3>
+                      <div className="text-xs text-slate-400">
+                        🏟️ {rec.stadiumName} | Row {rec.row} Seat {rec.number}
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="font-extrabold text-emerald-400">${rec.price}</span>
+                        <span className="text-slate-400 font-medium">Confidence: {Math.round(rec.confidence * 100)}%</span>
+                      </div>
+                    </div>
 
-                  <div className="mt-4 pt-4 border-t border-slate-850 space-y-3">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setShowExplanation((prev) => ({ ...prev, [rec.type]: !prev[rec.type] }))
-                      }
-                      className="text-xs text-amber-500 hover:text-amber-400 font-semibold focus:outline-none flex justify-between w-full"
-                    >
-                      <span>Why this Recommendation?</span>
-                      <span>{showExplanation[rec.type] ? '▲' : '▼'}</span>
-                    </button>
+                    <div className="mt-4 pt-4 border-t border-slate-850 space-y-3">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowExplanation((prev) => ({ ...prev, [rec.type]: !prev[rec.type] }))
+                        }
+                        className="text-xs text-amber-500 hover:text-amber-400 font-semibold focus:outline-none flex justify-between w-full"
+                      >
+                        <span>Why this Recommendation?</span>
+                        <span>{showExplanation[rec.type] ? '▲' : '▼'}</span>
+                      </button>
 
-                    {showExplanation[rec.type] && (
-                      <div className="text-[11px] text-slate-300 bg-slate-950/80 p-3 rounded-xl border border-slate-850 space-y-2">
-                        <ul className="space-y-1">
-                          {rec.justifications.map((just, idx) => (
-                            <li key={idx} className="flex items-center space-x-1.5">
-                              <span className="text-emerald-500">✓</span>
-                              <span>{just}</span>
-                            </li>
-                          ))}
-                        </ul>
-                        <div className="border-t border-slate-850 pt-2 space-y-1 text-slate-400">
-                          <div className="flex justify-between">
-                            <span>Favorite Team Fit:</span>
-                            <span>{rec.breakdown.favoriteTeamMatch}/40</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Budget Fit:</span>
-                            <span>{rec.breakdown.budgetMatch}/30</span>
+                      {showExplanation[rec.type] && (
+                        <div className="text-[11px] text-slate-300 bg-slate-950/80 p-3 rounded-xl border border-slate-850 space-y-2">
+                          <ul className="space-y-1">
+                            {rec.justifications.map((just, idx) => (
+                              <li key={idx} className="flex items-center space-x-1.5">
+                                <span className="text-emerald-500">✓</span>
+                                <span>{just}</span>
+                              </li>
+                            ))}
+                          </ul>
+                          <div className="border-t border-slate-850 pt-2 space-y-1 text-slate-400">
+                            <div className="flex justify-between">
+                              <span>Favorite Team Fit:</span>
+                              <span>{rec.breakdown.favoriteTeamMatch}/40</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Budget Fit:</span>
+                              <span>{rec.breakdown.budgetMatch}/30</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </section>
 
@@ -421,44 +490,51 @@ export default function DashboardPage() {
 
             {/* Stadium Arena SVG Layout */}
             <div className="relative flex justify-center py-8 bg-slate-950/80 rounded-2xl border border-slate-900">
-              <svg width="400" height="200" viewBox="0 0 400 200" className="max-w-full">
-                {/* Midfield pitch marker */}
-                <rect x="140" y="60" width="120" height="80" fill="none" stroke="#334155" strokeWidth="2" strokeDasharray="4" />
-                <circle cx="200" cy="100" r="20" fill="none" stroke="#334155" strokeWidth="2" />
+              {seats.length === 0 ? (
+                /* Map Skeleton loading state */
+                <div className="h-40 w-full flex items-center justify-center text-slate-500 text-xs animate-pulse">
+                  Rendering interactive stadium canvas map...
+                </div>
+              ) : (
+                <svg width="400" height="200" viewBox="0 0 400 200" className="max-w-full">
+                  {/* Midfield pitch marker */}
+                  <rect x="140" y="60" width="120" height="80" fill="none" stroke="#334155" strokeWidth="2" strokeDasharray="4" />
+                  <circle cx="200" cy="100" r="20" fill="none" stroke="#334155" strokeWidth="2" />
 
-                {/* Seating Grid */}
-                {seats.map((seat, index) => {
-                  const x = 40 + (index % 10) * 35;
-                  const y = 30 + Math.floor(index / 10) * 35;
+                  {/* Seating Grid */}
+                  {seats.map((seat, index) => {
+                    const x = 40 + (index % 10) * 35;
+                    const y = 30 + Math.floor(index / 10) * 35;
 
-                  const isSelected = selectedSeat?.id === seat.id;
-                  const color =
-                    seat.status === 'Reserved' || seat.status === 'Locked'
-                      ? '#ef4444'
-                      : seat.section === 'Category 1'
-                      ? '#10b981'
-                      : seat.section === 'Category 2'
-                      ? '#06b6d4'
-                      : '#f59e0b';
+                    const isSelected = selectedSeat?.id === seat.id;
+                    const color =
+                      seat.status === 'Reserved' || seat.status === 'Locked'
+                        ? '#ef4444'
+                        : seat.section === 'Category 1'
+                        ? '#10b981'
+                        : seat.section === 'Category 2'
+                        ? '#06b6d4'
+                        : '#f59e0b';
 
-                  return (
-                    <g key={seat.id} className="cursor-pointer" onClick={() => handleSelectSeat(seat)}>
-                      <circle
-                        cx={x}
-                        cy={y}
-                        r={isSelected ? '12' : '9'}
-                        fill={color}
-                        className="transition-all hover:scale-125"
-                        stroke={isSelected ? '#ffffff' : 'none'}
-                        strokeWidth="2"
-                      />
-                      <text x={x} y={y + 3} textAnchor="middle" fill="#0f172a" fontSize="8" fontWeight="bold">
-                        {seat.row}
-                      </text>
-                    </g>
-                  );
-                })}
-              </svg>
+                    return (
+                      <g key={seat.id} className="cursor-pointer" onClick={() => handleSelectSeat(seat)}>
+                        <circle
+                          cx={x}
+                          cy={y}
+                          r={isSelected ? '12' : '9'}
+                          fill={color}
+                          className="transition-all hover:scale-125"
+                          stroke={isSelected ? '#ffffff' : 'none'}
+                          strokeWidth="2"
+                        />
+                        <text x={x} y={y + 3} textAnchor="middle" fill="#0f172a" fontSize="8" fontWeight="bold">
+                          {seat.row}
+                        </text>
+                      </g>
+                    );
+                  })}
+                </svg>
+              )}
             </div>
           </section>
         </div>

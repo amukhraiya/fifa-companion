@@ -21,6 +21,11 @@ const TOOL_LIST = [
   { name: 'WeatherCheck', description: 'Matchday weather preview' },
   { name: 'MapsSearch', description: 'Location POI search' },
   { name: 'RoutePlanning', description: 'Travel path route calculations' },
+  { name: 'HotelSearch', description: 'Finds local accommodations' },
+  { name: 'MedicalCheck', description: 'Checks emergency response bays' },
+  { name: 'CrowdPredictionCheck', description: 'Gate queuing wait predictions' },
+  { name: 'RestaurantSearch', description: 'Queries nearby dietary grills' },
+  { name: 'StadiumGuideCheck', description: 'Facilities gate entry logs' },
 ];
 
 export default function CommandCenterPage() {

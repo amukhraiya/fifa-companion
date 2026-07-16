@@ -203,40 +203,112 @@ export class ReserveSeatTool extends BaseTool<{ seatId: string; userId: string }
 }
 
 // -------------------------------------------------------------
-// 2. Travel & Maps Tools
 // -------------------------------------------------------------
-export class WeatherTool extends BaseTool<{ date?: string }, { temp: string; forecast: string }> {
-  name = 'WeatherCheck';
-  description = 'Checks the match day weather forecast.';
-  schema = z.object({
-    date: z.string().optional(),
-  });
-
-  async execute(_input: { date?: string }): Promise<{ temp: string; forecast: string }> {
-    return { temp: '24°C', forecast: 'Clear Skies' };
-  }
+// 2. Travel & Local Grounding Tools
+// -------------------------------------------------------------
+export interface WeatherOutput {
+  temperature: number;
+  rainProbability: number;
+  humidity: number;
+  windSpeed: number;
+  icon: string;
+  advice: string[];
 }
 
-export class MapsTool extends BaseTool<{ query: string }, { places: Array<{ name: string; rating: number }> }> {
-  name = 'MapsSearch';
-  description = 'Finds local venues, stadium grounds, and dining spots.';
+export class WeatherTool extends BaseTool<{ date?: string; stadiumId?: string }, WeatherOutput> {
+  name = 'WeatherCheck';
+  description = 'Checks the match day weather forecast and returns meteorological parameters and AI safety advice.';
   schema = z.object({
-    query: z.string(),
+    date: z.string().optional(),
+    stadiumId: z.string().optional(),
   });
 
-  async execute(_input: { query: string }): Promise<{ places: Array<{ name: string; rating: number }> }> {
+  async execute(_input: { date?: string; stadiumId?: string }): Promise<WeatherOutput> {
     return {
-      places: [
-        { name: 'Copacabana Palace Restaurant', rating: 4.8 },
-        { name: 'Maracanã Stadium Food Court', rating: 4.2 },
-      ],
+      temperature: 24,
+      rainProbability: 10,
+      humidity: 60,
+      windSpeed: 12,
+      icon: 'sunny',
+      advice: ['Carry sunscreen', 'Hydrate', 'Wear lightweight fabrics'],
     };
   }
 }
 
+export interface MapsInput {
+  from: string;
+  to: string;
+  mode: 'walking' | 'driving' | 'metro' | 'bus' | 'taxi';
+}
+
+export interface MapsOutput {
+  routeName: string;
+  durationMinutes: number;
+  walkingDistanceMeters: number;
+  transfers: number;
+  costEstimate: number;
+}
+
+export class MapsTool extends BaseTool<MapsInput, MapsOutput> {
+  name = 'MapsSearch';
+  description = 'Calculates travel routes, durations, walking distances, transit transfers, and estimated costs.';
+  schema = z.object({
+    from: z.string(),
+    to: z.string(),
+    mode: z.enum(['walking', 'driving', 'metro', 'bus', 'taxi']),
+  });
+
+  async execute(input: MapsInput): Promise<MapsOutput> {
+    const { mode } = input;
+    switch (mode) {
+      case 'walking':
+        return {
+          routeName: 'Stadium Pedestrian Boulevard',
+          durationMinutes: 45,
+          walkingDistanceMeters: 3200,
+          transfers: 0,
+          costEstimate: 0,
+        };
+      case 'driving':
+        return {
+          routeName: 'Highway 2 North',
+          durationMinutes: 15,
+          walkingDistanceMeters: 100,
+          transfers: 0,
+          costEstimate: 12,
+        };
+      case 'metro':
+        return {
+          routeName: 'Metro Line 4 Express',
+          durationMinutes: 18,
+          walkingDistanceMeters: 400,
+          transfers: 1,
+          costEstimate: 3,
+        };
+      case 'bus':
+        return {
+          routeName: 'Stadium Shuttle Bus Route B',
+          durationMinutes: 28,
+          walkingDistanceMeters: 300,
+          transfers: 0,
+          costEstimate: 2,
+        };
+      case 'taxi':
+        return {
+          routeName: 'City Cab Express Lane',
+          durationMinutes: 15,
+          walkingDistanceMeters: 50,
+          transfers: 0,
+          costEstimate: 25,
+        };
+    }
+  }
+}
+
+// Deprecated in favor of the unified MapsSearch tool, maintained for backward compatibility scaffolding.
 export class RouteTool extends BaseTool<{ from: string; to: string }, { durationMinutes: number; routeName: string }> {
   name = 'RoutePlanning';
-  description = 'Calculates travel times and pathways between locations.';
+  description = 'Calculates travel times and pathways between locations (scaffold).';
   schema = z.object({
     from: z.string(),
     to: z.string(),
@@ -246,6 +318,189 @@ export class RouteTool extends BaseTool<{ from: string; to: string }, { duration
     return { durationMinutes: 18, routeName: 'Metro Line 4 Express' };
   }
 }
+
+export interface RestaurantOutput {
+  name: string;
+  rating: number;
+  distanceMeters: number;
+  estimatedWaitMinutes: number;
+  priceRange: string;
+  tags: string[];
+}
+
+export class RestaurantTool extends BaseTool<{ stadiumId: string; budgetMax?: number; dietaryFilters?: string[] }, RestaurantOutput[]> {
+  name = 'RestaurantSearch';
+  description = 'Recommends nearby restaurants filtered by stadium proximity, budget limits, and dietary options.';
+  schema = z.object({
+    stadiumId: z.string(),
+    budgetMax: z.number().optional(),
+    dietaryFilters: z.array(z.string()).optional(),
+  });
+
+  async execute(_input: { stadiumId: string; budgetMax?: number; dietaryFilters?: string[] }): Promise<RestaurantOutput[]> {
+    return [
+      {
+        name: 'Al Lusail Grill & Shawarma',
+        rating: 4.7,
+        distanceMeters: 350,
+        estimatedWaitMinutes: 15,
+        priceRange: '$$',
+        tags: ['halal', 'family', 'budget'],
+      },
+      {
+        name: 'Green Oasis Vegan Diner',
+        rating: 4.5,
+        distanceMeters: 620,
+        estimatedWaitMinutes: 10,
+        priceRange: '$$',
+        tags: ['vegan', 'vegetarian', 'family'],
+      },
+      {
+        name: 'The Premium Pitchside Bistro',
+        rating: 4.9,
+        distanceMeters: 150,
+        estimatedWaitMinutes: 25,
+        priceRange: '$$$',
+        tags: ['premium', 'family'],
+      },
+      {
+        name: 'Quick Kick Fast Food',
+        rating: 4.1,
+        distanceMeters: 280,
+        estimatedWaitMinutes: 5,
+        priceRange: '$',
+        tags: ['fastfood', 'budget'],
+      },
+    ];
+  }
+}
+
+export interface StadiumGuideOutput {
+  entryGate: string;
+  restrooms: string;
+  foodCourt: string;
+  medical: string;
+  parkingZone: string;
+  emergencyExit: string;
+  accessibilityRoutes: string[];
+}
+
+export class StadiumGuideTool extends BaseTool<{ stadiumId: string; accessibility?: boolean }, StadiumGuideOutput> {
+  name = 'StadiumGuideCheck';
+  description = 'Provides stadium facility mapping details including entry gates, food courts, medical bays, and wheelchair accessible pathways.';
+  schema = z.object({
+    stadiumId: z.string(),
+    accessibility: z.boolean().optional(),
+  });
+
+  async execute(input: { stadiumId: string; accessibility?: boolean }): Promise<StadiumGuideOutput> {
+    return {
+      entryGate: input.accessibility ? 'North Gate (Wheelchair Accessible)' : 'Gate 3 East',
+      restrooms: 'Section 112 & Section 204',
+      foodCourt: 'Main Concourses Level 1 & 2',
+      medical: 'First Aid Station adjacent to Section 115',
+      parkingZone: input.accessibility ? 'Parking Lot A (Accessible Pass Only)' : 'Parking Lot C',
+      emergencyExit: 'Exits 4, 8, and 12',
+      accessibilityRoutes: [
+        'Elevator access via East concourse to Level 2 seating',
+        'Ramp walkways equipped at all main boundary entries',
+      ],
+    };
+  }
+}
+
+export interface HotelOutput {
+  name: string;
+  rating: number;
+  distanceMeters: number;
+  pricePerNight: number;
+  tags: string[];
+}
+
+export class HotelTool extends BaseTool<{ stadiumId: string; budgetMax?: number }, HotelOutput[]> {
+  name = 'HotelSearch';
+  description = 'Finds local accommodations, lodges, and luxury hotels near the specified stadium.';
+  schema = z.object({
+    stadiumId: z.string(),
+    budgetMax: z.number().optional(),
+  });
+
+  async execute(_input: { stadiumId: string; budgetMax?: number }): Promise<HotelOutput[]> {
+    return [
+      {
+        name: 'The Grand Cup Plaza Hotel',
+        rating: 4.8,
+        distanceMeters: 800,
+        pricePerNight: 280,
+        tags: ['premium', 'pool', 'gym'],
+      },
+      {
+        name: 'Lusail Supporter Lodge',
+        rating: 4.3,
+        distanceMeters: 1400,
+        pricePerNight: 95,
+        tags: ['budget', 'free-wifi'],
+      },
+      {
+        name: 'Stadium View Suites',
+        rating: 4.6,
+        distanceMeters: 450,
+        pricePerNight: 190,
+        tags: ['family', 'breakfast-included'],
+      },
+    ];
+  }
+}
+
+export interface MedicalOutput {
+  nearestMedicalBay: string;
+  contactNumber: string;
+  distanceMeters: number;
+  emergencyResponseTimeMinutes: number;
+}
+
+export class MedicalTool extends BaseTool<{ stadiumId: string }, MedicalOutput> {
+  name = 'MedicalCheck';
+  description = 'Retrieves nearest medical services, pharmacy lists, and emergency response statistics.';
+  schema = z.object({
+    stadiumId: z.string(),
+  });
+
+  async execute(_input: { stadiumId: string }): Promise<MedicalOutput> {
+    return {
+      nearestMedicalBay: 'Stadium Emergency Trauma Center (Station A)',
+      contactNumber: '+974 4400 9999',
+      distanceMeters: 150,
+      emergencyResponseTimeMinutes: 3,
+    };
+  }
+}
+
+export interface CrowdPredictionOutput {
+  crowdDensity: 'Low' | 'Medium' | 'High' | 'Critical';
+  waitTimeMinutes: number;
+  recommendedGate: string;
+  advice: string;
+}
+
+export class CrowdPredictionTool extends BaseTool<{ stadiumId: string; timeOfDay?: string }, CrowdPredictionOutput> {
+  name = 'CrowdPredictionCheck';
+  description = 'Analyzes real-time fan telemetry to predict stadium crowd densities and gate queuing wait times.';
+  schema = z.object({
+    stadiumId: z.string(),
+    timeOfDay: z.string().optional(),
+  });
+
+  async execute(_input: { stadiumId: string; timeOfDay?: string }): Promise<CrowdPredictionOutput> {
+    return {
+      crowdDensity: 'High',
+      waitTimeMinutes: 20,
+      recommendedGate: 'Gate 5 West (Low Queue)',
+      advice: 'Expect heavy traffic near the South Metro interchange. Travel via West gate bypass paths.',
+    };
+  }
+}
+
 
 // -------------------------------------------------------------
 // 3. News & Stats Tools

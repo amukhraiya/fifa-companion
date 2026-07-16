@@ -8,6 +8,7 @@ import { authRouter } from './routes/auth';
 import { usersRouter } from './routes/users';
 import { chatRouter } from './routes/chat';
 import { bookingRouter } from './routes/booking';
+import { travelRouter } from './routes/travel';
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/users', usersRouter);
 app.use('/api/v1/chat', chatRouter);
 app.use('/api/v1/booking', bookingRouter);
+app.use('/api/v1/travel', travelRouter);
 
 // Wildcard 404 handler
 app.use((_req: Request, res: Response) => {

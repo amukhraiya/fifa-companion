@@ -1,12 +1,10 @@
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
-  extensions = [pgvector(map: "vector")]
 }
 
 model User {
@@ -26,6 +24,7 @@ model User {
   sessions      Session[]
   refreshTokens RefreshToken[]
   auditLogs     AuditLog[]
+  travelHistories TravelHistory[]
 }
 
 model FanMemory {
@@ -216,7 +215,7 @@ model KnowledgeChunk {
   title      String
   content    String
   metadata   Json
-  embedding  Unsupported("vector(768)")? // Gemini Pro embedding dimensions (768)
+  embedding  String? // Gemini Pro embedding dimensions (768)
 }
 
 model Restaurant {
@@ -227,4 +226,15 @@ model Restaurant {
   dietaryTags Json     // e.g. ["vegan", "halal"]
   priceTier   String   // "$", "$$", "$$$"
   rating      Float?
+}
+
+model TravelHistory {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  matchId    String
+  routeTaken String
+  transport  String   // e.g. "metro", "taxi", "bus", "walking"
+  duration   Int      // in minutes
+  createdAt  DateTime @default(now())
 }
