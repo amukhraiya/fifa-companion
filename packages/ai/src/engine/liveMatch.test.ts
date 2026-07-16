@@ -20,7 +20,8 @@ describe('LiveMatchEngine unit tests', () => {
     const engine = new LiveMatchEngine('Brazil', 'Spain');
     engine.startMatch();
 
-    const event = engine.tick(); // advances to min 2
+    const event = engine.tick();
+    expect(event).not.toBeNull();// advances to min 2
     const state = engine.getState();
     expect(state.minute).toBe(2);
     expect(state.status).toBe('LIVE');

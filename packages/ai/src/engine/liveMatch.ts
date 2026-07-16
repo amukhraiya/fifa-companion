@@ -1,4 +1,4 @@
-import { MatchState, MatchEvent, MatchStatus } from './types';
+import { MatchState, MatchEvent} from './types';
 
 export class LiveMatchEngine {
   private state: MatchState;
