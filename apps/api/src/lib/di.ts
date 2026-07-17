@@ -15,6 +15,8 @@ import {
   BookingAgent,
   TravelAgent,
   MatchCompanionAgent,
+  WalletAgent,
+  PostMatchAgent,
   SearchSeatsTool,
   ReserveSeatTool,
   WeatherTool,
@@ -82,6 +84,8 @@ toolRegistry.registerTool(new ReplayGuidanceTool());
 agentRegistry.registerAgent(new BookingAgent());
 agentRegistry.registerAgent(new TravelAgent());
 agentRegistry.registerAgent(new MatchCompanionAgent());
+agentRegistry.registerAgent(new WalletAgent());
+agentRegistry.registerAgent(new PostMatchAgent());
 
 // 3. Register subscribers
 const eventLogger = new EventLogger(prisma);

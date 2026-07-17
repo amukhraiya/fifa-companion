@@ -263,7 +263,14 @@ export class LiveMatchEngine {
             detail: 'Foul committed in the midfield area.',
           };
         }
-        return null;
+        // Every minute emits a MinuteTick so callers can always observe progress
+        return {
+          id: `ev-tick-${min}`,
+          minute: min,
+          eventType: 'MinuteTick',
+          team: 'Neutral',
+          detail: `Minute ${min}: Play continues.`,
+        };
     }
   }
 }

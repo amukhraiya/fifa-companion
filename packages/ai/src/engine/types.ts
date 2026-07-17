@@ -51,7 +51,8 @@ export type EventType =
   | 'Penalty'
   | 'HalfTime'
   | 'SecondHalf'
-  | 'FullTime';
+  | 'FullTime'
+  | 'MinuteTick';
 
 export interface MatchEvent {
   id: string;

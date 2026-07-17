@@ -10,6 +10,8 @@ import { chatRouter } from './routes/chat';
 import { bookingRouter } from './routes/booking';
 import { travelRouter } from './routes/travel';
 import { matchdayRouter } from './routes/matchday';
+import { walletRouter } from './routes/wallet';
+import { postMatchRouter } from './routes/postmatch';
 
 const app = express();
 
@@ -31,6 +33,8 @@ app.use('/api/v1/chat', chatRouter);
 app.use('/api/v1/booking', bookingRouter);
 app.use('/api/v1/travel', travelRouter);
 app.use('/api/v1/match-day', matchdayRouter);
+app.use('/api/v1/wallet', walletRouter);
+app.use('/api/v1/post-match', postMatchRouter);
 
 // Wildcard 404 handler
 app.use((_req: Request, res: Response) => {
