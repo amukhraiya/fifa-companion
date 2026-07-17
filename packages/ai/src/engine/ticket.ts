@@ -246,7 +246,7 @@ import { qrCodeService } from './qr';
 export const ticketService = new TicketService(qrCodeService);
 
 // Seed two demo tickets
-const _demo1 = ticketService.generateTicket({
+ticketService.generateTicket({
   userId: 'demo-user',
   seatId: 'seat-brazilspain-c12',
   matchId: 'match-brazil-spain',
@@ -263,7 +263,7 @@ const _demo1 = ticketService.generateTicket({
   paymentId: 'mock-txn-demo-001',
 });
 
-const _demo2 = ticketService.generateTicket({
+const _demo2Id = ticketService.generateTicket({
   userId: 'demo-user',
   seatId: 'seat-argfra-a05',
   matchId: 'match-argentina-france',
@@ -278,7 +278,7 @@ const _demo2 = ticketService.generateTicket({
   price: 950,
   currency: 'USD',
   paymentId: 'mock-txn-demo-002',
-});
+}).ticketId;
 
 // Mark second ticket as used (past match)
-ticketService.markUsed(_demo2.ticketId);
+ticketService.markUsed(_demo2Id);

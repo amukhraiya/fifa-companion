@@ -78,7 +78,6 @@ export class MockPaymentProvider implements IPaymentProvider {
 export class StripePaymentProvider implements IPaymentProvider {
   readonly providerName = 'StripePaymentProvider';
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async charge(_input: PaymentInput): Promise<PaymentResult> {
     throw new Error(
       'StripePaymentProvider is an architecture stub. Use MockPaymentProvider in Demo Mode.'

@@ -4,7 +4,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { ServiceTrace } from './payment';
-import { TicketPayload, TicketStatus } from './ticket';
+import { TicketPayload } from './ticket';
 
 export interface WalletTicketEntry extends TicketPayload {
   travelShortcut: string;

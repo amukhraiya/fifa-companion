@@ -212,7 +212,7 @@ export class MemoryEngine {
     return summary;
   }
 
-  generateTimeline(userId: string): TimelineEvent[] {
+  generateTimeline(_userId: string): TimelineEvent[] {
     const now = new Date();
     const daysAgo = (d: number) => new Date(now.getTime() - d * 86400000).toISOString();
 
