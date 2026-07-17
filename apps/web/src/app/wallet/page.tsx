@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+import { ArrowLeft, Download, Share2, ShieldCheck, Map, MapPin, CloudSun, Receipt } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -15,7 +17,7 @@ interface TicketEntry {
   seatNumber: string;
   price: number;
   currency: string;
-  status: string;
+  status: 'Active' | 'Used' | 'Cancelled' | 'Shared' | 'Downloaded';
   qrPayload: string;
   barcodePayload: string;
   offlineToken: string;
@@ -44,329 +46,8 @@ const TEAM_FLAGS: Record<string, string> = {
   Germany: '🇩🇪', England: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', Portugal: '🇵🇹', Netherlands: '🇳🇱',
 };
 
-const TEAM_COLORS: Record<string, string[]> = {
-  Brazil: ['#009C3B', '#FEDF00'],
-  Spain: ['#c60b1e', '#f1bf00'],
-  Argentina: ['#74acdf', '#ffffff'],
-  France: ['#002395', '#ED2939'],
-};
-
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-}
-
-// ─── QR Code SVG (visual mock) ────────────────────────────────────────────────
-
-function QRCodeDisplay({ payload, animated }: { payload: string; animated?: boolean }) {
-  const size = 120;
-  const cells = 10;
-  const cellSize = size / cells;
-
-  // Deterministic pattern from payload
-  const pattern: boolean[][] = Array.from({ length: cells }, (_, r) =>
-    Array.from({ length: cells }, (_, c) => {
-      const idx = (r * cells + c) % payload.length;
-      return payload.charCodeAt(idx) % 2 === 0;
-    })
-  );
-
-  // Corner finder patterns
-  const isFinderPattern = (r: number, c: number) =>
-    (r < 3 && c < 3) || (r < 3 && c >= cells - 3) || (r >= cells - 3 && c < 3);
-
-  return (
-    <div style={{ position: 'relative', display: 'inline-block' }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        <rect width={size} height={size} fill="white" rx="4" />
-        {pattern.map((row, r) =>
-          row.map((filled, c) => (
-            <rect
-              key={`${r}-${c}`}
-              x={c * cellSize}
-              y={r * cellSize}
-              width={cellSize}
-              height={cellSize}
-              fill={filled || isFinderPattern(r, c) ? '#0a0a1a' : 'transparent'}
-            />
-          ))
-        )}
-      </svg>
-      {animated && (
-        <div style={{
-          position: 'absolute', inset: 0, borderRadius: 4,
-          background: 'linear-gradient(135deg, transparent 40%, rgba(249,184,0,0.15) 50%, transparent 60%)',
-          animation: 'qrSweep 2.5s ease-in-out infinite',
-        }} />
-      )}
-    </div>
-  );
-}
-
-// ─── Digital Ticket Card ──────────────────────────────────────────────────────
-
-function DigitalTicket({ ticket, expanded, onToggle, onValidate }: {
-  ticket: TicketEntry;
-  expanded: boolean;
-  onToggle: () => void;
-  onValidate: (t: TicketEntry) => void;
-}) {
-  const [downloading, setDownloading] = useState(false);
-  const [sharing, setSharing] = useState(false);
-  const [qrVisible, setQrVisible] = useState(false);
-
-  const parts = ticket.matchName.split(' vs ');
-  const home = parts[0]?.trim() ?? 'Home';
-  const away = parts[1]?.trim().split('—')[0]?.trim() ?? 'Away';
-  const homeColor = TEAM_COLORS[home]?.[0] ?? '#1e3a5f';
-  const awayColor = TEAM_COLORS[away]?.[0] ?? '#3d1a1a';
-  const homeFlag = TEAM_FLAGS[home] ?? '🏳️';
-  const awayFlag = TEAM_FLAGS[away] ?? '🏳️';
-  const isPast = ticket.status === 'Used';
-  const statusColor = { Active: '#00d084', Used: '#888', Cancelled: '#e74c3c', Shared: '#f39c12', Downloaded: '#3498db' }[ticket.status] ?? '#888';
-
-  const handleDownload = async () => {
-    setDownloading(true);
-    await new Promise(r => setTimeout(r, 1200));
-    setDownloading(false);
-  };
-
-  const handleShare = async () => {
-    setSharing(true);
-    await new Promise(r => setTimeout(r, 800));
-    setSharing(false);
-  };
-
-  return (
-    <div
-      id={`ticket-${ticket.ticketId}`}
-      style={{
-        position: 'relative',
-        borderRadius: 20,
-        overflow: 'hidden',
-        cursor: 'pointer',
-        transition: 'transform 0.3s, box-shadow 0.3s',
-        transform: expanded ? 'scale(1.01)' : 'scale(1)',
-        boxShadow: expanded
-          ? '0 24px 60px rgba(249,184,0,0.25)'
-          : '0 8px 32px rgba(0,0,0,0.4)',
-        opacity: isPast ? 0.75 : 1,
-        marginBottom: 24,
-      }}
-    >
-      {/* Ticket top — match info */}
-      <div
-        style={{
-          background: `linear-gradient(135deg, ${homeColor}dd, #0a0a1a 40%, ${awayColor}dd)`,
-          padding: '28px 28px 20px',
-          position: 'relative',
-        }}
-        onClick={onToggle}
-      >
-        {/* World Cup badge */}
-        <div style={{ position: 'absolute', top: 16, right: 20, textAlign: 'right' }}>
-          <div style={{ fontSize: 10, color: '#f9b800', letterSpacing: 2, fontWeight: 700 }}>FIFA WORLD CUP</div>
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', letterSpacing: 1 }}>2026 USA • CAN • MEX</div>
-        </div>
-
-        {/* Status badge */}
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 16,
-          background: 'rgba(0,0,0,0.4)', borderRadius: 20, padding: '4px 12px',
-          border: `1px solid ${statusColor}44`,
-        }}>
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: statusColor, boxShadow: `0 0 6px ${statusColor}` }} />
-          <span style={{ color: statusColor, fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>{ticket.status.toUpperCase()}</span>
-        </div>
-
-        {/* Teams */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 36 }}>{homeFlag}</div>
-            <div style={{ color: 'white', fontWeight: 700, fontSize: 14, marginTop: 4 }}>{home}</div>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ color: '#f9b800', fontSize: 22, fontWeight: 900 }}>VS</div>
-            <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, marginTop: 4 }}>MATCHDAY</div>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 36 }}>{awayFlag}</div>
-            <div style={{ color: 'white', fontWeight: 700, fontSize: 14, marginTop: 4 }}>{away}</div>
-          </div>
-        </div>
-
-        {/* Date & venue */}
-        <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 12 }}>
-          📅 {formatDate(ticket.matchDate)}
-        </div>
-        <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 12, marginTop: 4 }}>
-          🏟️ {ticket.venueName}
-        </div>
-      </div>
-
-      {/* Perforated separator */}
-      <div style={{
-        height: 2, background: 'repeating-linear-gradient(90deg, #1a1a2e 0, #1a1a2e 8px, transparent 8px, transparent 16px)',
-        position: 'relative',
-      }}>
-        <div style={{ position: 'absolute', left: -14, top: -12, width: 24, height: 24, borderRadius: '50%', background: '#0a0a1a' }} />
-        <div style={{ position: 'absolute', right: -14, top: -12, width: 24, height: 24, borderRadius: '50%', background: '#0a0a1a' }} />
-      </div>
-
-      {/* Ticket bottom — seat info */}
-      <div style={{ background: 'rgba(10,10,26,0.97)', padding: '16px 28px 20px', backdropFilter: 'blur(20px)' }} onClick={onToggle}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 12, marginBottom: 16 }}>
-          {[
-            { label: 'GATE', value: ticket.gate },
-            { label: 'SECTION', value: ticket.section },
-            { label: 'ROW', value: ticket.row },
-            { label: 'SEAT', value: ticket.seatNumber },
-          ].map(({ label, value }) => (
-            <div key={label}>
-              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, letterSpacing: 1.5, marginBottom: 4 }}>{label}</div>
-              <div style={{ color: '#f9b800', fontWeight: 800, fontSize: 16, fontFamily: 'monospace' }}>{value}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Barcode strip */}
-        <div style={{
-          height: 32, background: 'repeating-linear-gradient(90deg, #1a1a2e 0, #1a1a2e 2px, transparent 2px, transparent 4px)',
-          borderRadius: 4, marginBottom: 8, opacity: 0.6,
-        }} />
-        <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, letterSpacing: 3, fontFamily: 'monospace', textAlign: 'center' }}>
-          {ticket.barcodePayload}
-        </div>
-      </div>
-
-      {/* Expanded section */}
-      {expanded && (
-        <div style={{ background: 'rgba(15,15,30,0.98)', padding: '20px 28px 24px', borderTop: '1px solid rgba(249,184,0,0.1)' }}>
-          {/* QR Code */}
-          <div style={{ display: 'flex', gap: 20, marginBottom: 24 }}>
-            <div>
-              <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, letterSpacing: 1, marginBottom: 10 }}>ENTRY QR CODE</div>
-              <div
-                onClick={(e) => { e.stopPropagation(); setQrVisible(!qrVisible); }}
-                style={{ cursor: 'pointer', padding: 8, background: 'white', borderRadius: 8, display: 'inline-block' }}
-                title="Click to animate QR"
-              >
-                <QRCodeDisplay payload={ticket.qrPayload} animated={qrVisible} />
-              </div>
-              <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9, marginTop: 6, textAlign: 'center' }}>Click to animate</div>
-            </div>
-
-            <div style={{ flex: 1 }}>
-              <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, letterSpacing: 1, marginBottom: 10 }}>DETAILS</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {[
-                  { icon: '🚇', text: ticket.travelShortcut },
-                  { icon: '🗺️', text: ticket.navigationShortcut },
-                  { icon: '☀️', text: ticket.weatherShortcut },
-                  { icon: '🧾', text: ticket.paymentReceipt },
-                ].map(({ icon, text }) => (
-                  <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'rgba(255,255,255,0.65)', fontSize: 12 }}>
-                    <span>{icon}</span>
-                    <span style={{ flex: 1 }}>{text}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Offline token */}
-          <div style={{ background: 'rgba(249,184,0,0.06)', border: '1px solid rgba(249,184,0,0.15)', borderRadius: 8, padding: '8px 14px', marginBottom: 20 }}>
-            <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, letterSpacing: 1 }}>OFFLINE TOKEN: </span>
-            <span style={{ color: '#f9b800', fontSize: 11, fontFamily: 'monospace' }}>{ticket.offlineToken}</span>
-          </div>
-
-          {/* Action buttons */}
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            {!isPast && (
-              <button
-                id={`btn-validate-${ticket.ticketId}`}
-                onClick={(e) => { e.stopPropagation(); onValidate(ticket); }}
-                style={{ flex: 1, minWidth: 100, padding: '10px 16px', borderRadius: 10, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg, #00d084, #00b36b)', color: 'white', fontWeight: 700, fontSize: 13 }}
-              >
-                🏟️ Simulate Entry
-              </button>
-            )}
-            <button
-              id={`btn-download-${ticket.ticketId}`}
-              onClick={(e) => { e.stopPropagation(); handleDownload(); }}
-              disabled={downloading}
-              style={{ flex: 1, minWidth: 100, padding: '10px 16px', borderRadius: 10, border: '1px solid rgba(249,184,0,0.3)', cursor: 'pointer', background: 'rgba(249,184,0,0.08)', color: '#f9b800', fontWeight: 700, fontSize: 13, opacity: downloading ? 0.6 : 1 }}
-            >
-              {downloading ? '⏳ Generating...' : '⬇️ Download'}
-            </button>
-            <button
-              id={`btn-share-${ticket.ticketId}`}
-              onClick={(e) => { e.stopPropagation(); handleShare(); }}
-              disabled={sharing}
-              style={{ flex: 1, minWidth: 100, padding: '10px 16px', borderRadius: 10, border: '1px solid rgba(100,181,246,0.3)', cursor: 'pointer', background: 'rgba(100,181,246,0.08)', color: '#64b5f6', fontWeight: 700, fontSize: 13, opacity: sharing ? 0.6 : 1 }}
-            >
-              {sharing ? '⏳ Sharing...' : '🔗 Share'}
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Entry Validation Modal ────────────────────────────────────────────────────
-
-function ValidationModal({ ticket, onClose }: { ticket: TicketEntry | null; onClose: () => void }) {
-  const [step, setStep] = useState(0);
-  const steps = ['Scanning QR Code...', 'Validating Signature...', 'Verifying Ticket...', ''];
-
-  useEffect(() => {
-    if (!ticket) return;
-    setStep(0);
-    const timers = [
-      setTimeout(() => setStep(1), 900),
-      setTimeout(() => setStep(2), 1800),
-      setTimeout(() => setStep(3), 2700),
-    ];
-    return () => timers.forEach(clearTimeout);
-  }, [ticket]);
-
-  if (!ticket) return null;
-  const success = step === 3;
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)' }}>
-      <div style={{ background: 'linear-gradient(135deg, #0a0a1a, #1a1a2e)', borderRadius: 24, padding: '40px 48px', textAlign: 'center', border: success ? '1px solid #00d084' : '1px solid rgba(249,184,0,0.2)', maxWidth: 400, width: '90%', boxShadow: success ? '0 0 60px rgba(0,208,132,0.3)' : '0 0 60px rgba(249,184,0,0.1)' }}>
-        {!success ? (
-          <>
-            <div style={{ fontSize: 48, marginBottom: 20, animation: 'spin 1s linear infinite' }}>⟳</div>
-            <div style={{ color: 'white', fontSize: 18, fontWeight: 700, marginBottom: 12 }}>Entry Validation</div>
-            <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14 }}>{steps[step]}</div>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 20 }}>
-              {steps.slice(0, 3).map((_, i) => (
-                <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: i <= step ? '#f9b800' : 'rgba(255,255,255,0.2)', transition: 'background 0.3s' }} />
-              ))}
-            </div>
-          </>
-        ) : (
-          <>
-            <div style={{ fontSize: 64, marginBottom: 16 }}>✅</div>
-            <div style={{ color: '#00d084', fontSize: 22, fontWeight: 900, marginBottom: 8 }}>ADMITTED</div>
-            <div style={{ color: 'white', fontSize: 16, marginBottom: 4 }}>Welcome to the match!</div>
-            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, marginBottom: 8 }}>Gate: {ticket.gate}</div>
-            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, marginBottom: 24 }}>Section {ticket.section} · Row {ticket.row} · Seat {ticket.seatNumber}</div>
-            <div style={{ color: '#f9b800', fontSize: 13, marginBottom: 24 }}>🏆 Achievement unlocked: First Match!</div>
-            <button
-              id="btn-close-validation"
-              onClick={onClose}
-              style={{ padding: '12px 32px', borderRadius: 12, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg, #00d084, #00b36b)', color: 'white', fontWeight: 700, fontSize: 15 }}
-            >
-              Continue →
-            </button>
-          </>
-        )}
-      </div>
-    </div>
-  );
 }
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
@@ -419,6 +100,236 @@ function getMockWallet(): WalletData {
   };
 }
 
+// ─── Digital Ticket Card ──────────────────────────────────────────────────────
+
+function DigitalTicket({ ticket, expanded, onToggle, onValidate }: {
+  ticket: TicketEntry;
+  expanded: boolean;
+  onToggle: () => void;
+  onValidate: (t: TicketEntry) => void;
+}) {
+  const [downloading, setDownloading] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const [qrVisible, setQrVisible] = useState(false);
+
+  const parts = ticket.matchName.split(' vs ');
+  const home = parts[0]?.trim() ?? 'Home';
+  const away = parts[1]?.trim().split('—')[0]?.trim() ?? 'Away';
+  const homeFlag = TEAM_FLAGS[home] ?? '🏳️';
+  const awayFlag = TEAM_FLAGS[away] ?? '🏳️';
+  const isPast = ticket.status === 'Used';
+
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDownloading(true);
+    await new Promise(r => setTimeout(r, 1200));
+    setDownloading(false);
+  };
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSharing(true);
+    await new Promise(r => setTimeout(r, 800));
+    setSharing(false);
+  };
+
+  return (
+    <div 
+      className={`relative rounded-3xl overflow-hidden cursor-pointer transition-all duration-500 ease-out mb-8 glass-card
+        ${expanded ? 'scale-[1.02] shadow-[0_20px_50px_rgba(217,119,6,0.15)] border-primary/40' : 'scale-100'} 
+        ${isPast ? 'opacity-75 grayscale-[0.3]' : ''}`}
+    >
+      <div 
+        className="p-6 relative bg-gradient-to-b from-white/5 to-transparent backdrop-blur-md"
+        onClick={onToggle}
+      >
+        <div className="absolute top-4 right-6 text-right">
+          <div className="text-[10px] text-primary font-bold tracking-[0.2em]">FIFA WORLD CUP</div>
+          <div className="text-[10px] text-white/50 tracking-widest">2026 USA • CAN • MEX</div>
+        </div>
+
+        <div className="inline-flex items-center gap-2 mb-6 px-3 py-1 rounded-full bg-black/40 border border-primary/30">
+          <div className={`w-2 h-2 rounded-full ${ticket.status === 'Active' ? 'bg-primary animate-pulse' : 'bg-muted-foreground'}`} />
+          <span className="text-[10px] font-bold text-primary tracking-widest uppercase">{ticket.status}</span>
+        </div>
+
+        <div className="flex items-center justify-between mb-8">
+          <div className="text-center">
+            <div className="text-5xl drop-shadow-lg">{homeFlag}</div>
+            <div className="text-white font-bold text-sm mt-3">{home}</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-primary to-amber-300">VS</div>
+            <div className="text-[10px] text-white/40 mt-2 tracking-widest">MATCHDAY</div>
+          </div>
+          <div className="text-center">
+            <div className="text-5xl drop-shadow-lg">{awayFlag}</div>
+            <div className="text-white font-bold text-sm mt-3">{away}</div>
+          </div>
+        </div>
+
+        <div className="text-white/80 text-sm font-medium">
+          <span className="mr-2">📅</span> {formatDate(ticket.matchDate)}
+        </div>
+        <div className="text-white/80 text-sm font-medium mt-2">
+          <span className="mr-2">🏟️</span> {ticket.venueName}
+        </div>
+      </div>
+
+      <div className="relative h-2 bg-transparent">
+        <div className="absolute inset-0 border-t-2 border-dashed border-white/20"></div>
+        <div className="absolute -left-3 top-[-11px] w-6 h-6 rounded-full bg-background shadow-inner"></div>
+        <div className="absolute -right-3 top-[-11px] w-6 h-6 rounded-full bg-background shadow-inner"></div>
+      </div>
+
+      <div className="p-6 bg-black/40 backdrop-blur-md" onClick={onToggle}>
+        <div className="grid grid-cols-4 gap-4 mb-6">
+          {[
+            { label: 'GATE', value: ticket.gate },
+            { label: 'SECTION', value: ticket.section },
+            { label: 'ROW', value: ticket.row },
+            { label: 'SEAT', value: ticket.seatNumber },
+          ].map(({ label, value }) => (
+            <div key={label}>
+              <div className="text-[10px] text-white/40 tracking-widest mb-1">{label}</div>
+              <div className="text-primary font-mono font-bold text-lg">{value}</div>
+            </div>
+          ))}
+        </div>
+        
+        <div className="h-8 rounded overflow-hidden opacity-50 flex flex-col justify-center gap-[2px]">
+          {/* Simulated Barcode */}
+          {Array.from({ length: 40 }).map((_, i) => (
+            <div key={i} className={`bg-white h-full inline-block ${i % 2 === 0 ? 'w-1' : (i % 3 === 0 ? 'w-2' : 'w-[2px]')}`} style={{ marginRight: i%2===0?'2px':'1px' }}></div>
+          ))}
+        </div>
+        <div className="text-center text-[10px] text-white/30 tracking-[0.3em] font-mono mt-2">
+          {ticket.barcodePayload}
+        </div>
+      </div>
+
+      {expanded && (
+        <div className="p-6 bg-black/60 border-t border-primary/20 animate-fade-in">
+          <div className="flex flex-col md:flex-row gap-8 mb-8">
+            <div className="flex flex-col items-center justify-center p-4 bg-white rounded-2xl cursor-pointer hover:scale-105 transition-transform" onClick={(e) => { e.stopPropagation(); setQrVisible(!qrVisible); }}>
+               <div className="w-32 h-32 bg-[url('https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=FIFA-TICKET')] bg-cover relative">
+                 {qrVisible && <div className="absolute inset-0 bg-primary/20 animate-pulse rounded"></div>}
+               </div>
+               <span className="text-[10px] text-black/50 font-bold uppercase tracking-widest mt-4">Entry QR</span>
+            </div>
+            
+            <div className="flex-1 space-y-4">
+              <div className="text-[10px] text-white/50 tracking-widest uppercase mb-2">Connected Services</div>
+              {[
+                { icon: Map, text: ticket.travelShortcut },
+                { icon: MapPin, text: ticket.navigationShortcut },
+                { icon: CloudSun, text: ticket.weatherShortcut },
+                { icon: Receipt, text: ticket.paymentReceipt },
+              ].map(({ icon: Icon, text }, i) => (
+                <div key={i} className="flex items-center gap-3 text-sm text-white/70 bg-white/5 p-3 rounded-xl border border-white/5">
+                  <Icon className="w-4 h-4 text-primary" />
+                  <span className="truncate">{text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-primary/10 border border-primary/20 rounded-xl p-3 flex justify-between items-center mb-6">
+            <span className="text-xs text-white/50 uppercase tracking-widest">Offline Token</span>
+            <span className="text-xs text-primary font-mono font-bold">{ticket.offlineToken}</span>
+          </div>
+
+          <div className="flex gap-4">
+            {!isPast && (
+              <button 
+                onClick={(e) => { e.stopPropagation(); onValidate(ticket); }}
+                className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+              >
+                <ShieldCheck className="w-4 h-4" />
+                Simulate Entry
+              </button>
+            )}
+            <button 
+              onClick={handleDownload}
+              disabled={downloading}
+              className="flex-1 py-3 rounded-xl glass-panel text-white font-bold text-sm hover:bg-white/10 transition-colors flex items-center justify-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              {downloading ? 'Downloading...' : 'Save PDF'}
+            </button>
+            <button 
+              onClick={handleShare}
+              disabled={sharing}
+              className="flex-1 py-3 rounded-xl glass-panel text-white font-bold text-sm hover:bg-white/10 transition-colors flex items-center justify-center gap-2"
+            >
+              <Share2 className="w-4 h-4" />
+              {sharing ? 'Sharing...' : 'Share'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Entry Validation Modal ────────────────────────────────────────────────────
+
+function ValidationModal({ ticket, onClose }: { ticket: TicketEntry | null; onClose: () => void }) {
+  const [step, setStep] = useState(0);
+  const steps = ['Scanning QR Code...', 'Validating Signature...', 'Verifying Ticket...', ''];
+
+  useEffect(() => {
+    if (!ticket) return;
+    setStep(0);
+    const timers = [
+      setTimeout(() => setStep(1), 900),
+      setTimeout(() => setStep(2), 1800),
+      setTimeout(() => setStep(3), 2700),
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, [ticket]);
+
+  if (!ticket) return null;
+  const success = step === 3;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
+      <div className={`glass-card p-10 w-full max-w-sm rounded-3xl text-center border-2 transition-colors duration-500 ${success ? 'border-emerald-500 shadow-[0_0_50px_rgba(16,185,129,0.3)]' : 'border-primary/30'}`}>
+        {!success ? (
+          <div className="animate-fade-in-up">
+            <div className="w-16 h-16 rounded-full border-4 border-primary border-t-transparent animate-spin mx-auto mb-6"></div>
+            <h3 className="text-xl font-bold text-white mb-2">Entry Validation</h3>
+            <p className="text-white/60 text-sm mb-8">{steps[step]}</p>
+            <div className="flex justify-center gap-2">
+              {steps.slice(0, 3).map((_, i) => (
+                <div key={i} className={`w-2 h-2 rounded-full transition-colors duration-300 ${i <= step ? 'bg-primary' : 'bg-white/20'}`} />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="animate-fade-in-up">
+            <div className="w-20 h-20 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-6">
+              <ShieldCheck className="w-10 h-10" />
+            </div>
+            <h3 className="text-2xl font-black text-emerald-400 mb-2 tracking-wide uppercase">Admitted</h3>
+            <p className="text-white text-lg mb-6">Welcome to the match!</p>
+            <div className="bg-black/40 rounded-xl p-4 mb-8 text-left">
+              <div className="text-white/60 text-xs uppercase tracking-widest mb-1">Location</div>
+              <div className="text-white font-mono text-sm">Gate {ticket.gate} • Sec {ticket.section} • Row {ticket.row} • Seat {ticket.seatNumber}</div>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-full py-4 rounded-xl bg-emerald-500 text-black font-bold text-sm hover:opacity-90 transition-opacity"
+            >
+              Continue to Match Day Hub
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function WalletPage() {
@@ -444,81 +355,70 @@ export default function WalletPage() {
   ];
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #050510; font-family: 'Inter', sans-serif; }
-        @keyframes qrSweep { 0%,100% { transform: translateX(-100%); } 50% { transform: translateX(100%); } }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
-        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
-      `}</style>
+    <main className="min-h-screen bg-background relative pb-24">
+      {/* Background Ambience */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[400px] bg-primary/5 blur-[120px] rounded-full"></div>
+      </div>
 
-      <div style={{ minHeight: '100vh', background: 'radial-gradient(ellipse at 20% 20%, #0d1b4b22, transparent), radial-gradient(ellipse at 80% 80%, #1a0a2e22, transparent), #050510', color: 'white' }}>
+      <div className="max-w-2xl mx-auto px-4 pt-8 relative z-10">
+        <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm text-white/50 hover:text-white transition-colors mb-8">
+          <ArrowLeft className="w-4 h-4" />
+          Back to Dashboard
+        </Link>
 
-        {/* Header */}
-        <div style={{ padding: '32px 24px 0', maxWidth: 680, margin: '0 auto' }}>
-          <a href="/dashboard" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, marginBottom: 24 }}>
-            ← Dashboard
-          </a>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <div>
-              <h1 style={{ fontSize: 28, fontWeight: 900, background: 'linear-gradient(135deg, #f9b800, #ff6b35)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                Digital Wallet
-              </h1>
-              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, marginTop: 4 }}>Your FIFA World Cup 2026 tickets</p>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ color: '#f9b800', fontSize: 22, fontWeight: 900 }}>{walletData.currency} {walletData.totalSpent.toLocaleString()}</div>
-              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>Total invested</div>
-            </div>
+        <div className="flex justify-between items-end mb-10">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-black bg-gradient-to-r from-primary to-amber-300 bg-clip-text text-transparent mb-2">
+              Digital Wallet
+            </h1>
+            <p className="text-white/60 text-sm">Your connected tournament passes</p>
           </div>
-
-          {/* Stats row */}
-          <div style={{ display: 'flex', gap: 12, marginBottom: 28, marginTop: 20 }}>
-            {[
-              { label: 'Upcoming', value: walletData.upcomingTickets.length, icon: '🎫', color: '#00d084' },
-              { label: 'Past', value: walletData.pastTickets.length, icon: '📋', color: '#888' },
-              { label: 'Downloaded', value: walletData.downloadedTickets.length, icon: '⬇️', color: '#3498db' },
-            ].map(({ label, value, icon, color }) => (
-              <div key={label} style={{ flex: 1, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '14px 16px', backdropFilter: 'blur(20px)' }}>
-                <div style={{ fontSize: 20, marginBottom: 4 }}>{icon}</div>
-                <div style={{ color, fontSize: 22, fontWeight: 800 }}>{value}</div>
-                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>{label}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Tabs */}
-          <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 4, marginBottom: 28 }}>
-            {tabs.map(({ key, label, count }) => (
-              <button
-                key={key}
-                id={`tab-${key}`}
-                onClick={() => setActiveTab(key)}
-                style={{
-                  flex: 1, padding: '10px 12px', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, transition: 'all 0.2s',
-                  background: activeTab === key ? 'linear-gradient(135deg, #f9b800, #ff6b35)' : 'transparent',
-                  color: activeTab === key ? '#0a0a1a' : 'rgba(255,255,255,0.5)',
-                }}
-              >
-                {label} {count > 0 && <span style={{ opacity: 0.7 }}>({count})</span>}
-              </button>
-            ))}
+          <div className="text-right">
+            <div className="text-2xl font-black text-white">{walletData.currency} {walletData.totalSpent.toLocaleString()}</div>
+            <div className="text-xs text-primary uppercase tracking-widest">Total Value</div>
           </div>
         </div>
 
-        {/* Tickets */}
-        <div style={{ maxWidth: 680, margin: '0 auto', padding: '0 24px 48px' }}>
+        <div className="grid grid-cols-3 gap-3 mb-10">
+          {[
+            { label: 'Upcoming', count: walletData.upcomingTickets.length, icon: '🎟️', color: 'text-primary' },
+            { label: 'Past', count: walletData.pastTickets.length, icon: '📋', color: 'text-white/40' },
+            { label: 'Downloads', count: walletData.downloadedTickets.length, icon: '⬇️', color: 'text-sky-400' }
+          ].map((stat, i) => (
+            <div key={i} className="glass-panel rounded-2xl p-4 text-center">
+              <div className="text-2xl mb-1">{stat.icon}</div>
+              <div className={`text-xl font-bold ${stat.color}`}>{stat.count}</div>
+              <div className="text-[10px] text-white/50 uppercase tracking-widest">{stat.label}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex gap-2 p-1 bg-white/5 rounded-xl border border-white/10 mb-8 backdrop-blur-sm">
+          {tabs.map(({ key, label, count }) => (
+            <button
+              key={key}
+              onClick={() => setActiveTab(key)}
+              className={`flex-1 py-3 text-sm font-bold rounded-lg transition-all ${
+                activeTab === key 
+                  ? 'bg-primary text-primary-foreground shadow-lg' 
+                  : 'text-white/50 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              {label} {count > 0 && <span className="opacity-70 font-normal ml-1">({count})</span>}
+            </button>
+          ))}
+        </div>
+
+        <div className="space-y-6">
           {tickets.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px 24px', color: 'rgba(255,255,255,0.3)' }}>
-              <div style={{ fontSize: 48, marginBottom: 12 }}>🎫</div>
-              <div style={{ fontSize: 16 }}>No {activeTab} tickets</div>
+            <div className="text-center py-20 glass-panel rounded-3xl">
+              <div className="text-6xl mb-4 opacity-50">🎫</div>
+              <div className="text-white/60 font-medium">No {activeTab} tickets found</div>
             </div>
           ) : (
             tickets.map((ticket, i) => (
-              <div key={ticket.ticketId} style={{ animation: `fadeUp 0.4s ease ${i * 0.1}s both` }}>
+              <div key={ticket.ticketId} className="animate-fade-in-up" style={{ animationDelay: `${i * 0.1}s` }}>
                 <DigitalTicket
                   ticket={ticket}
                   expanded={expandedId === ticket.ticketId}
@@ -529,10 +429,9 @@ export default function WalletPage() {
             ))
           )}
         </div>
-
-        {/* Validation Modal */}
-        <ValidationModal ticket={validateTicket} onClose={() => setValidateTicket(null)} />
       </div>
-    </>
+
+      <ValidationModal ticket={validateTicket} onClose={() => setValidateTicket(null)} />
+    </main>
   );
 }

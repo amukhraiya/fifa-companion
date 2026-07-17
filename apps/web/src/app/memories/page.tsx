@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
+import { ArrowLeft, MapPin, Calendar, Activity, CloudSun, Target, Award, PlayCircle, Map, Camera } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -98,17 +100,14 @@ function PhotoGrid() {
     { icon: '🎫', label: 'My Ticket' },
   ];
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+    <div className="grid grid-cols-2 gap-3">
       {photos.map(({ icon, label }) => (
-        <div key={label} style={{
-          aspectRatio: '4/3', borderRadius: 12, background: 'rgba(255,255,255,0.04)',
-          border: '1px dashed rgba(255,255,255,0.12)', display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer',
-          transition: 'border-color 0.2s',
-        }}>
-          <span style={{ fontSize: 28 }}>{icon}</span>
-          <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>{label}</span>
-          <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 10 }}>+ Add photo</span>
+        <div key={label} className="aspect-4/3 rounded-xl bg-white/5 border border-dashed border-white/20 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-white/10 hover:border-primary/50 transition-all group">
+          <span className="text-3xl group-hover:scale-110 transition-transform">{icon}</span>
+          <span className="text-white/40 text-xs">{label}</span>
+          <span className="text-primary text-[10px] uppercase tracking-widest font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+            <Camera className="w-3 h-3" /> Add Photo
+          </span>
         </div>
       ))}
     </div>
@@ -121,8 +120,8 @@ function MemoryCard({ memory, index }: { memory: MatchMemory; index: number }) {
   const [expanded, setExpanded] = useState(false);
   const [activeSection, setActiveSection] = useState<'summary' | 'timeline' | 'photos'>('summary');
 
-  const accentColor = memory.homeTeam === 'Brazil' ? '#009C3B' : '#74acdf';
-  const isHighScore = memory.homeScore + memory.awayScore >= 5;
+  const accentClass = memory.homeTeam === 'Brazil' ? 'from-emerald-500/20' : 'from-sky-500/20';
+  const borderClass = memory.homeTeam === 'Brazil' ? 'border-emerald-500/30' : 'border-sky-500/30';
 
   const timelineItems = [
     { icon: '🚀', time: 'T-3h', text: 'Departed for stadium via AI travel plan' },
@@ -135,157 +134,145 @@ function MemoryCard({ memory, index }: { memory: MatchMemory; index: number }) {
 
   return (
     <div
-      id={`memory-${memory.memoryId}`}
-      style={{
-        borderRadius: 24, overflow: 'hidden', marginBottom: 28,
-        boxShadow: expanded ? `0 24px 80px ${accentColor}30` : '0 8px 40px rgba(0,0,0,0.5)',
-        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-        animation: `scrapFadeIn 0.5s ease ${index * 0.15}s both`,
-        border: `1px solid ${expanded ? accentColor + '40' : 'rgba(255,255,255,0.06)'}`,
-      }}
+      className={`relative glass-card rounded-[2rem] overflow-hidden mb-8 transition-all duration-500 ease-out animate-fade-in-up 
+        ${expanded ? `scale-[1.02] shadow-2xl ${borderClass}` : 'scale-100'}`}
+      style={{ animationDelay: `${index * 0.15}s` }}
     >
-      {/* Card header — the scrapbook cover */}
       <div
         onClick={() => setExpanded(!expanded)}
-        style={{
-          cursor: 'pointer', position: 'relative', overflow: 'hidden',
-          background: `linear-gradient(135deg, ${accentColor}22 0%, #0a0a1a 60%, ${isHighScore ? '#f9b80022' : '#1a1a2e22'} 100%)`,
-          padding: '28px 28px 24px',
-        }}
+        className={`cursor-pointer relative overflow-hidden bg-gradient-to-br ${accentClass} to-transparent p-8`}
       >
-        {/* Decorative tape effect */}
-        <div style={{ position: 'absolute', top: -8, left: 40, width: 60, height: 18, background: 'rgba(249,184,0,0.25)', borderRadius: 2, transform: 'rotate(-2deg)' }} />
-        <div style={{ position: 'absolute', top: -8, right: 60, width: 50, height: 18, background: 'rgba(255,255,255,0.1)', borderRadius: 2, transform: 'rotate(1.5deg)' }} />
+        {/* Decorative elements */}
+        <div className="absolute -top-2 left-10 w-16 h-5 bg-amber-500/30 -rotate-3 rounded-sm backdrop-blur-sm"></div>
+        <div className="absolute -top-2 right-12 w-12 h-5 bg-white/20 rotate-2 rounded-sm backdrop-blur-sm"></div>
 
-        {/* Country & flags */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, marginTop: 12 }}>
-          <span style={{ fontSize: 20 }}>{COUNTRY_FLAGS[memory.country] ?? '🌍'}</span>
-          <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, letterSpacing: 1 }}>{memory.city}, {memory.country}</span>
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.05)', borderRadius: 20, padding: '4px 10px' }}>
-            <span style={{ fontSize: 14 }}>{memory.weatherIcon}</span>
-            <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>{memory.temperature}</span>
+        <div className="flex items-center gap-2 mb-4 mt-2">
+          <span className="text-xl">{COUNTRY_FLAGS[memory.country] ?? '🌍'}</span>
+          <span className="text-white/60 text-sm tracking-wide font-medium">{memory.city}, {memory.country}</span>
+          <div className="ml-auto flex items-center gap-2 bg-black/40 border border-white/10 rounded-full px-3 py-1">
+            <span className="text-sm">{memory.weatherIcon}</span>
+            <span className="text-white/70 text-xs font-bold">{memory.temperature}</span>
           </div>
         </div>
 
-        {/* Match heading */}
-        <h2 style={{ fontSize: 20, fontWeight: 900, color: 'white', marginBottom: 12 }}>{memory.matchName}</h2>
+        <h2 className="text-2xl font-black text-white mb-4">{memory.matchName}</h2>
 
-        {/* Score */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 24 }}>{TEAM_FLAGS[memory.homeTeam] ?? '🏳️'}</span>
-            <span style={{ color: 'white', fontWeight: 700, fontSize: 14 }}>{memory.homeTeam}</span>
+        <div className="flex items-center gap-6 mb-6">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl drop-shadow-md">{TEAM_FLAGS[memory.homeTeam] ?? '🏳️'}</span>
+            <span className="text-white font-bold">{memory.homeTeam}</span>
           </div>
-          <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 10, padding: '6px 16px', border: '1px solid rgba(255,255,255,0.1)' }}>
-            <span style={{ color: '#f9b800', fontWeight: 900, fontSize: 20, letterSpacing: 2 }}>{memory.score}</span>
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/20 shadow-inner">
+            <span className="text-amber-400 font-black text-2xl tracking-[0.2em]">{memory.score}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ color: 'white', fontWeight: 700, fontSize: 14 }}>{memory.awayTeam}</span>
-            <span style={{ fontSize: 24 }}>{TEAM_FLAGS[memory.awayTeam] ?? '🏳️'}</span>
+          <div className="flex items-center gap-3">
+            <span className="text-white font-bold">{memory.awayTeam}</span>
+            <span className="text-3xl drop-shadow-md">{TEAM_FLAGS[memory.awayTeam] ?? '🏳️'}</span>
           </div>
         </div>
 
-        {/* Metadata row */}
-        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-          <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>📅 {formatDate(memory.attendanceDate)}</span>
-          <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>🔊 {memory.fanPulseDb}dB fan pulse</span>
-          <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>🏟️ {memory.venue}</span>
+        <div className="flex gap-4 flex-wrap text-white/60 text-sm font-medium">
+          <span className="flex items-center gap-2"><Calendar className="w-4 h-4"/> {formatDate(memory.attendanceDate)}</span>
+          <span className="flex items-center gap-2 text-emerald-400"><Activity className="w-4 h-4"/> {memory.fanPulseDb}dB pulse</span>
+          <span className="flex items-center gap-2"><MapPin className="w-4 h-4"/> {memory.venue}</span>
         </div>
 
-        {/* Expand indicator */}
-        <div style={{ position: 'absolute', bottom: 16, right: 20, color: 'rgba(255,255,255,0.3)', fontSize: 18, transition: 'transform 0.3s', transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
-          ⌄
+        <div className={`absolute bottom-6 right-8 text-white/30 transition-transform duration-300 ${expanded ? 'rotate-180' : 'rotate-0'}`}>
+          ▼
         </div>
       </div>
 
-      {/* Expanded scrapbook content */}
       {expanded && (
-        <div style={{ background: '#080814', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-          {/* Section tabs */}
-          <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="bg-black/60 backdrop-blur-md border-t border-white/10 animate-fade-in">
+          <div className="flex border-b border-white/10">
             {(['summary', 'timeline', 'photos'] as const).map((s) => (
               <button
                 key={s}
-                id={`mem-tab-${memory.memoryId}-${s}`}
                 onClick={() => setActiveSection(s)}
-                style={{
-                  flex: 1, padding: '14px 0', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 12, letterSpacing: 0.5, textTransform: 'capitalize', transition: 'all 0.2s',
-                  background: 'transparent',
-                  color: activeSection === s ? '#f9b800' : 'rgba(255,255,255,0.35)',
-                  borderBottom: activeSection === s ? '2px solid #f9b800' : '2px solid transparent',
-                }}
+                className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest transition-colors ${
+                  activeSection === s 
+                    ? 'text-primary border-b-2 border-primary bg-primary/5' 
+                    : 'text-white/40 hover:text-white hover:bg-white/5 border-b-2 border-transparent'
+                }`}
               >
-                {s === 'summary' ? '🤖 AI Summary' : s === 'timeline' ? '⏱️ Timeline' : '📸 Photos'}
+                {s === 'summary' && '🤖 AI Summary'}
+                {s === 'timeline' && '⏱️ Timeline'}
+                {s === 'photos' && '📸 Photos'}
               </button>
             ))}
           </div>
 
-          <div style={{ padding: '24px 28px 28px' }}>
+          <div className="p-8">
             {activeSection === 'summary' && (
-              <div style={{ animation: 'fadeUp 0.3s ease' }}>
-                {/* AI Summary */}
-                <div style={{ background: 'rgba(249,184,0,0.05)', border: '1px solid rgba(249,184,0,0.15)', borderRadius: 14, padding: '16px 18px', marginBottom: 20 }}>
-                  <div style={{ color: '#f9b800', fontSize: 11, letterSpacing: 1.5, fontWeight: 700, marginBottom: 10 }}>🤖 AI MATCH SUMMARY</div>
-                  <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13, lineHeight: 1.7 }}>{memory.aiSummary}</p>
+              <div className="space-y-6 animate-fade-in-up">
+                <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-6">
+                  <div className="text-amber-500 text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <BotIcon /> AI Match Summary
+                  </div>
+                  <p className="text-white/80 text-sm leading-relaxed">{memory.aiSummary}</p>
                 </div>
 
-                {/* Key info grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {[
-                    { label: 'Best Player', value: `⭐ ${memory.bestPlayer}`, color: '#f9b800' },
-                    { label: 'Fan Pulse', value: `🔊 ${memory.fanPulseDb}dB`, color: '#00d084' },
-                    { label: 'Weather', value: `${memory.weatherIcon} ${memory.temperature}`, color: '#64b5f6' },
-                    { label: 'Venue', value: `🏟️ ${memory.venue}`, color: '#ce93d8' },
-                  ].map(({ label, value, color }) => (
-                    <div key={label} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '14px 16px' }}>
-                      <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, letterSpacing: 1, marginBottom: 6 }}>{label.toUpperCase()}</div>
-                      <div style={{ color, fontSize: 13, fontWeight: 600 }}>{value}</div>
+                    { label: 'Best Player', value: memory.bestPlayer, icon: Award, color: 'text-amber-400' },
+                    { label: 'Fan Pulse', value: `${memory.fanPulseDb}dB`, icon: Activity, color: 'text-emerald-400' },
+                    { label: 'Weather', value: `${memory.weatherIcon} ${memory.temperature}`, icon: CloudSun, color: 'text-sky-400' },
+                    { label: 'Venue', value: memory.venue, icon: MapPin, color: 'text-purple-400' },
+                  ].map(({ label, value, icon: Icon, color }) => (
+                    <div key={label} className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col justify-center">
+                      <div className="text-white/40 text-[10px] uppercase tracking-widest mb-2">{label}</div>
+                      <div className={`text-sm font-bold flex items-center gap-2 ${color}`}>
+                        <Icon className="w-4 h-4" />
+                        <span className="truncate">{value}</span>
+                      </div>
                     </div>
                   ))}
                 </div>
 
-                {/* Turning point */}
-                <div style={{ background: 'rgba(100,181,246,0.05)', border: '1px solid rgba(100,181,246,0.15)', borderRadius: 12, padding: '14px 16px', marginBottom: 16 }}>
-                  <div style={{ color: '#64b5f6', fontSize: 10, letterSpacing: 1.5, fontWeight: 700, marginBottom: 8 }}>⚡ TURNING POINT</div>
-                  <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, lineHeight: 1.6 }}>{memory.turningPoint}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-sky-500/5 border border-sky-500/20 rounded-xl p-5">
+                    <div className="text-sky-400 text-[10px] uppercase tracking-widest font-bold mb-2 flex items-center gap-2">
+                      <Target className="w-4 h-4" /> Turning Point
+                    </div>
+                    <p className="text-white/70 text-sm leading-relaxed">{memory.turningPoint}</p>
+                  </div>
+                  <div className="bg-purple-500/5 border border-purple-500/20 rounded-xl p-5">
+                    <div className="text-purple-400 text-[10px] uppercase tracking-widest font-bold mb-2 flex items-center gap-2">
+                      <PlayCircle className="w-4 h-4" /> Favorite Moment
+                    </div>
+                    <p className="text-white/70 text-sm leading-relaxed italic">&ldquo;{memory.favoriteMetent}&rdquo;</p>
+                  </div>
                 </div>
 
-                {/* Favorite moment */}
-                <div style={{ background: 'rgba(206,147,216,0.05)', border: '1px solid rgba(206,147,216,0.15)', borderRadius: 12, padding: '14px 16px', marginBottom: 20 }}>
-                  <div style={{ color: '#ce93d8', fontSize: 10, letterSpacing: 1.5, fontWeight: 700, marginBottom: 8 }}>💜 FAVORITE MOMENT</div>
-                  <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, lineHeight: 1.6 }}>&ldquo;{memory.favoriteMetent}&rdquo;</p>
-                </div>
-
-                {/* Travel */}
-                <div style={{ background: 'rgba(0,208,132,0.05)', border: '1px solid rgba(0,208,132,0.15)', borderRadius: 12, padding: '14px 16px' }}>
-                  <div style={{ color: '#00d084', fontSize: 10, letterSpacing: 1.5, fontWeight: 700, marginBottom: 8 }}>🚇 TRAVEL SUMMARY</div>
-                  <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, lineHeight: 1.6 }}>{memory.travelSummary}</p>
+                <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-5">
+                  <div className="text-emerald-500 text-[10px] uppercase tracking-widest font-bold mb-2 flex items-center gap-2">
+                    <Map className="w-4 h-4" /> Travel Summary
+                  </div>
+                  <p className="text-white/70 text-sm leading-relaxed">{memory.travelSummary}</p>
                 </div>
               </div>
             )}
 
             {activeSection === 'timeline' && (
-              <div style={{ animation: 'fadeUp 0.3s ease' }}>
-                <div style={{ position: 'relative', paddingLeft: 32 }}>
-                  <div style={{ position: 'absolute', left: 10, top: 0, bottom: 0, width: 2, background: 'linear-gradient(to bottom, #f9b800, rgba(249,184,0,0.1))' }} />
-                  {timelineItems.map(({ icon, time, text }, i) => (
-                    <div key={i} style={{ position: 'relative', paddingBottom: 20 }}>
-                      <div style={{ position: 'absolute', left: -26, top: 0, width: 22, height: 22, borderRadius: '50%', background: '#0a0a1a', border: '2px solid #f9b800', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11 }}>
-                        {icon}
-                      </div>
-                      <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: '10px 14px' }}>
-                        <div style={{ color: '#f9b800', fontSize: 10, fontWeight: 700, letterSpacing: 1, marginBottom: 4 }}>{time}</div>
-                        <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13 }}>{text}</div>
-                      </div>
+              <div className="animate-fade-in-up pl-6 relative">
+                <div className="absolute left-[11px] top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-primary/50 to-transparent"></div>
+                {timelineItems.map(({ icon, time, text }, i) => (
+                  <div key={i} className="relative pb-8 last:pb-0">
+                    <div className="absolute -left-10 top-0 w-8 h-8 rounded-full bg-background border-2 border-primary flex items-center justify-center text-sm shadow-[0_0_10px_rgba(217,119,6,0.5)]">
+                      {icon}
                     </div>
-                  ))}
-                </div>
+                    <div className="bg-white/5 border border-white/10 rounded-xl p-4 ml-4">
+                      <div className="text-primary text-[10px] font-bold tracking-widest mb-1">{time}</div>
+                      <div className="text-white/80 text-sm">{text}</div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
 
             {activeSection === 'photos' && (
-              <div style={{ animation: 'fadeUp 0.3s ease' }}>
-                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, marginBottom: 16 }}>Add your photos from this match to complete your scrapbook memory.</p>
+              <div className="animate-fade-in-up">
+                <p className="text-white/50 text-sm mb-6">Add your photos from this match to complete your scrapbook memory.</p>
                 <PhotoGrid />
               </div>
             )}
@@ -296,58 +283,60 @@ function MemoryCard({ memory, index }: { memory: MatchMemory; index: number }) {
   );
 }
 
+function BotIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+  )
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function MemoriesPage() {
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #050510; font-family: 'Inter', sans-serif; }
-        @keyframes scrapFadeIn { from { opacity:0; transform:translateY(24px) rotate(-0.5deg); } to { opacity:1; transform:translateY(0) rotate(0deg); } }
-        @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
-      `}</style>
+    <main className="min-h-screen bg-background relative pb-24 overflow-hidden">
+      {/* Background Ambience */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-10 left-10 w-96 h-96 bg-purple-500/10 blur-[100px] rounded-full mix-blend-screen animate-pulse-slow"></div>
+        <div className="absolute bottom-10 right-10 w-96 h-96 bg-amber-500/10 blur-[100px] rounded-full mix-blend-screen animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
+      </div>
 
-      <div style={{ minHeight: '100vh', background: 'radial-gradient(ellipse at 30% 10%, #0d1b3a18, transparent), #050510', color: 'white' }}>
-        {/* Header */}
-        <div style={{ maxWidth: 680, margin: '0 auto', padding: '32px 24px 0' }}>
-          <a href="/dashboard" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, marginBottom: 24 }}>
-            ← Dashboard
-          </a>
+      <div className="max-w-3xl mx-auto px-4 pt-8 relative z-10">
+        <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm text-white/50 hover:text-white transition-colors mb-8">
+          <ArrowLeft className="w-4 h-4" />
+          Back to Dashboard
+        </Link>
 
-          <div style={{ marginBottom: 12 }}>
-            <h1 style={{ fontSize: 28, fontWeight: 900, background: 'linear-gradient(135deg, #ce93d8, #f9b800)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              Fan Scrapbook
-            </h1>
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, marginTop: 6 }}>
-              Your personal FIFA World Cup 2026 memory collection
-            </p>
-          </div>
+        <div className="mb-10">
+          <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-purple-400 to-amber-300 bg-clip-text text-transparent mb-3 drop-shadow-sm">
+            Fan Scrapbook
+          </h1>
+          <p className="text-white/60 text-base">
+            Your personal FIFA World Cup 2026 memory collection, curated by AI.
+          </p>
+        </div>
 
-          {/* Stats bar */}
-          <div style={{ display: 'flex', gap: 16, marginBottom: 32, flexWrap: 'wrap' }}>
-            {[
-              { icon: '📖', label: `${MEMORIES.length} Memories`, color: '#ce93d8' },
-              { icon: '⚽', label: '5 Goals witnessed', color: '#f9b800' },
-              { icon: '🌍', label: '2 Countries', color: '#00d084' },
-              { icon: '🔊', label: '97.5dB avg pulse', color: '#64b5f6' },
-            ].map(({ icon, label, color }) => (
-              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: '8px 14px' }}>
-                <span>{icon}</span>
-                <span style={{ color, fontSize: 12, fontWeight: 600 }}>{label}</span>
-              </div>
-            ))}
-          </div>
+        {/* Stats bar */}
+        <div className="flex flex-wrap gap-4 mb-12">
+          {[
+            { icon: '📖', label: `${MEMORIES.length} Memories`, color: 'text-purple-400' },
+            { icon: '⚽', label: '5 Goals witnessed', color: 'text-amber-400' },
+            { icon: '🌍', label: '2 Countries', color: 'text-emerald-400' },
+            { icon: '🔊', label: '97.5dB avg pulse', color: 'text-sky-400' },
+          ].map(({ icon, label, color }) => (
+            <div key={label} className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-full px-5 py-2.5 backdrop-blur-sm">
+              <span className="text-lg">{icon}</span>
+              <span className={`text-sm font-bold ${color}`}>{label}</span>
+            </div>
+          ))}
         </div>
 
         {/* Memory cards */}
-        <div style={{ maxWidth: 680, margin: '0 auto', padding: '0 24px 60px' }}>
+        <div className="space-y-8">
           {MEMORIES.map((memory, i) => (
             <MemoryCard key={memory.memoryId} memory={memory} index={i} />
           ))}
         </div>
       </div>
-    </>
+    </main>
   );
 }

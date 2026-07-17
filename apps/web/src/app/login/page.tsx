@@ -32,7 +32,7 @@ export default function LoginPage() {
 
       // Save token in localStorage and redirect
       localStorage.setItem('accessToken', data.data.accessToken);
-      window.location.href = '/onboarding';
+      window.location.href = '/dashboard';
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Something went wrong';
       setError(msg);
@@ -61,7 +61,7 @@ export default function LoginPage() {
       }
 
       localStorage.setItem('accessToken', data.data.accessToken);
-      window.location.href = '/onboarding';
+      window.location.href = '/dashboard';
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Google Login failed';
       setError(msg);
@@ -85,7 +85,7 @@ export default function LoginPage() {
       }
 
       localStorage.setItem('accessToken', data.data.accessToken);
-      window.location.href = '/onboarding';
+      window.location.href = '/dashboard';
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Guest Login failed';
       setError(msg);

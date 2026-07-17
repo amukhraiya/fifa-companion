@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { ArrowLeft, Map, Compass, TrendingUp, DollarSign, PiggyBank, Leaf, Trophy, Target, Medal, Award, Star } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -67,7 +69,7 @@ function AnimatedCounter({ target, suffix = '', prefix = '', decimals = 0 }: { t
 
   useEffect(() => {
     let start = 0;
-    const duration = 1200;
+    const duration = 1500;
     const step = 16;
     const increment = target / (duration / step);
     const timer = setInterval(() => {
@@ -82,25 +84,6 @@ function AnimatedCounter({ target, suffix = '', prefix = '', decimals = 0 }: { t
   return <span>{prefix}{display}{suffix}</span>;
 }
 
-// ─── Stat Card ────────────────────────────────────────────────────────────────
-
-function StatCard({ icon, label, value, suffix, color, prefix }: { icon: string; label: string; value: number; suffix?: string; color: string; prefix?: string }) {
-  return (
-    <div style={{
-      background: 'rgba(255,255,255,0.03)', border: `1px solid ${color}22`,
-      borderRadius: 16, padding: '20px 18px', position: 'relative', overflow: 'hidden',
-      transition: 'transform 0.2s, box-shadow 0.2s',
-    }}>
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${color}, transparent)` }} />
-      <div style={{ fontSize: 28, marginBottom: 10 }}>{icon}</div>
-      <div style={{ color, fontSize: 26, fontWeight: 900, lineHeight: 1 }}>
-        <AnimatedCounter target={value} suffix={suffix} prefix={prefix} />
-      </div>
-      <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, marginTop: 6 }}>{label}</div>
-    </div>
-  );
-}
-
 // ─── Circular Progress ────────────────────────────────────────────────────────
 
 function CircularProgress({ percent, color, size = 64 }: { percent: number; color: string; size?: number }) {
@@ -109,73 +92,68 @@ function CircularProgress({ percent, color, size = 64 }: { percent: number; colo
   const dash = (percent / 100) * circ;
 
   return (
-    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={4} />
+    <svg width={size} height={size} className="-rotate-90">
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" className="stroke-white/10" strokeWidth={4} />
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={4}
         strokeDasharray={`${dash} ${circ - dash}`} strokeLinecap="round"
-        style={{ transition: 'stroke-dasharray 1s ease' }}
+        className="transition-all duration-1000 ease-out"
       />
     </svg>
+  );
+}
+
+// ─── Stat Card ────────────────────────────────────────────────────────────────
+
+function StatCard({ icon: Icon, label, value, suffix, color, prefix }: { icon: React.ElementType; label: string; value: number; suffix?: string; color: string; prefix?: string }) {
+  return (
+    <div className={`glass-card rounded-2xl p-6 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300`}>
+      <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-${color}-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity`} />
+      <div className={`mb-4 inline-flex p-3 rounded-xl bg-white/5 text-${color}-400 group-hover:scale-110 transition-transform`}>
+        <Icon className="w-6 h-6" />
+      </div>
+      <div className="text-3xl font-black text-white leading-tight mb-1 tracking-tight">
+        <AnimatedCounter target={value} suffix={suffix} prefix={prefix} />
+      </div>
+      <div className="text-white/50 text-xs font-semibold uppercase tracking-widest">{label}</div>
+    </div>
   );
 }
 
 // ─── Achievement Badge ────────────────────────────────────────────────────────
 
 function AchievementBadge({ achievement }: { achievement: Achievement }) {
-  const [hovered, setHovered] = useState(false);
-  const glowColor = achievement.unlocked ? '#f9b800' : 'rgba(255,255,255,0.2)';
-
   return (
-    <div
-      id={`achievement-${achievement.id}`}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        position: 'relative', borderRadius: 18, padding: '20px 16px', textAlign: 'center',
-        background: achievement.unlocked
-          ? 'linear-gradient(135deg, rgba(249,184,0,0.12), rgba(249,184,0,0.04))'
-          : 'rgba(255,255,255,0.02)',
-        border: `1px solid ${achievement.unlocked ? 'rgba(249,184,0,0.3)' : 'rgba(255,255,255,0.07)'}`,
-        transition: 'all 0.3s',
-        transform: hovered ? 'scale(1.04)' : 'scale(1)',
-        boxShadow: hovered && achievement.unlocked ? `0 8px 32px ${glowColor}33` : 'none',
-        filter: achievement.unlocked ? 'none' : 'grayscale(60%)',
-        cursor: 'default',
-      }}
-    >
-      {/* Unlock glow */}
+    <div className={`glass-card rounded-3xl p-6 text-center transition-all duration-300 hover:scale-105 ${achievement.unlocked ? 'border-primary/30 shadow-[0_10px_30px_rgba(217,119,6,0.1)]' : 'grayscale-[0.5] opacity-70'}`}>
       {achievement.unlocked && (
-        <div style={{ position: 'absolute', inset: -1, borderRadius: 18, background: `linear-gradient(135deg, ${glowColor}22, transparent)`, pointerEvents: 'none' }} />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent rounded-3xl pointer-events-none" />
       )}
-
-      <div style={{ fontSize: 36, marginBottom: 10, filter: achievement.unlocked ? 'none' : 'grayscale(100%) opacity(0.4)' }}>
+      
+      <div className={`text-5xl mb-4 transition-transform duration-300 hover:scale-110 ${achievement.unlocked ? '' : 'opacity-50 grayscale'}`}>
         {achievement.icon}
       </div>
-
-      <div style={{ color: achievement.unlocked ? 'white' : 'rgba(255,255,255,0.4)', fontWeight: 700, fontSize: 13, marginBottom: 6 }}>
+      
+      <h3 className={`font-bold text-sm mb-2 ${achievement.unlocked ? 'text-white' : 'text-white/50'}`}>
         {achievement.name}
-      </div>
-
-      <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, marginBottom: 12, lineHeight: 1.4 }}>
+      </h3>
+      
+      <p className="text-xs text-white/40 mb-4 leading-relaxed line-clamp-2">
         {achievement.description}
-      </div>
+      </p>
 
-      {/* Progress bar */}
-      {!achievement.unlocked && (
-        <div style={{ marginBottom: 10 }}>
-          <div style={{ height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 2, overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${achievement.progressPercent}%`, background: 'linear-gradient(90deg, #f9b800, #ff6b35)', borderRadius: 2, transition: 'width 1.2s ease' }} />
+      {!achievement.unlocked ? (
+        <div className="mt-auto">
+          <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden mb-2">
+            <div 
+              className="h-full bg-gradient-to-r from-primary to-amber-500 rounded-full transition-all duration-1000"
+              style={{ width: `${achievement.progressPercent}%` }}
+            />
           </div>
-          <div style={{ color: '#f9b800', fontSize: 10, marginTop: 4 }}>{achievement.progressPercent}%</div>
-        </div>
-      )}
-
-      {achievement.unlocked ? (
-        <div style={{ background: 'rgba(249,184,0,0.15)', borderRadius: 20, padding: '4px 10px', display: 'inline-block' }}>
-          <span style={{ color: '#f9b800', fontSize: 10, fontWeight: 700 }}>✓ UNLOCKED</span>
+          <div className="text-[10px] text-primary font-bold uppercase tracking-widest">{achievement.progressPercent}% Complete</div>
         </div>
       ) : (
-        <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10 }}>{achievement.requirement}</div>
+        <div className="mt-auto inline-flex items-center gap-1.5 bg-primary/20 text-primary px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase">
+          <Star className="w-3 h-3 fill-primary" /> Unlocked
+        </div>
       )}
     </div>
   );
@@ -187,99 +165,98 @@ export default function StatisticsPage() {
   const [activeTab, setActiveTab] = useState<'stats' | 'achievements'>('stats');
 
   const statItems = [
-    { icon: '🏟️', label: 'Matches Attended', value: MOCK_STATS.matchesAttended, color: '#f9b800' },
-    { icon: '🌍', label: 'Countries Visited', value: MOCK_STATS.countriesVisited, color: '#00d084' },
-    { icon: '🏙️', label: 'Cities Explored', value: MOCK_STATS.citiesVisited, color: '#64b5f6' },
-    { icon: '✈️', label: 'Travel Distance', value: MOCK_STATS.travelDistanceKm, suffix: ' km', color: '#ce93d8' },
-    { icon: '💰', label: 'Money Invested', value: MOCK_STATS.moneySpent, prefix: '$', color: '#ff8a65' },
-    { icon: '💚', label: 'Money Saved', value: MOCK_STATS.moneySaved, prefix: '$', color: '#00d084' },
-    { icon: '🌱', label: 'CO₂ Saved', value: MOCK_STATS.co2SavedKg, suffix: ' kg', color: '#66bb6a' },
-    { icon: '🏆', label: 'Achievements', value: MOCK_STATS.achievementsUnlocked, color: '#f9b800' },
+    { icon: Trophy, label: 'Matches Attended', value: MOCK_STATS.matchesAttended, color: 'amber' },
+    { icon: Map, label: 'Countries Visited', value: MOCK_STATS.countriesVisited, color: 'emerald' },
+    { icon: Compass, label: 'Cities Explored', value: MOCK_STATS.citiesVisited, color: 'sky' },
+    { icon: TrendingUp, label: 'Travel Distance', value: MOCK_STATS.travelDistanceKm, suffix: ' km', color: 'purple' },
+    { icon: DollarSign, label: 'Money Invested', value: MOCK_STATS.moneySpent, prefix: '$', color: 'rose' },
+    { icon: PiggyBank, label: 'Money Saved', value: MOCK_STATS.moneySaved, prefix: '$', color: 'emerald' },
+    { icon: Leaf, label: 'CO₂ Saved', value: MOCK_STATS.co2SavedKg, suffix: ' kg', color: 'emerald' },
+    { icon: Award, label: 'Achievements', value: MOCK_STATS.achievementsUnlocked, color: 'amber' },
   ];
 
   const unlockedCount = MOCK_ACHIEVEMENTS.filter((a) => a.unlocked).length;
+  const completionPercentage = (unlockedCount / MOCK_ACHIEVEMENTS.length) * 100;
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #050510; font-family: 'Inter', sans-serif; }
-        @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
-        @keyframes glow { 0%,100% { box-shadow: 0 0 20px rgba(249,184,0,0.2); } 50% { box-shadow: 0 0 40px rgba(249,184,0,0.5); } }
-      `}</style>
+    <main className="min-h-screen bg-background relative pb-24 overflow-hidden">
+      {/* Background Ambience */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-20 right-20 w-96 h-96 bg-primary/10 blur-[120px] rounded-full mix-blend-screen"></div>
+      </div>
 
-      <div style={{ minHeight: '100vh', background: 'radial-gradient(ellipse at 60% 10%, #0d1b3a18, transparent), #050510', color: 'white' }}>
-        {/* Header */}
-        <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 24px 0' }}>
-          <a href="/dashboard" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, marginBottom: 24 }}>
-            ← Dashboard
-          </a>
+      <div className="max-w-5xl mx-auto px-4 pt-8 relative z-10">
+        <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm text-white/50 hover:text-white transition-colors mb-8">
+          <ArrowLeft className="w-4 h-4" />
+          Back to Dashboard
+        </Link>
 
-          <div style={{ marginBottom: 20 }}>
-            <h1 style={{ fontSize: 28, fontWeight: 900, background: 'linear-gradient(135deg, #f9b800, #00d084)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              Fan Statistics
-            </h1>
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, marginTop: 6 }}>Your FIFA World Cup 2026 journey in numbers</p>
-          </div>
+        <div className="mb-10">
+          <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent mb-3 drop-shadow-sm">
+            Fan Statistics
+          </h1>
+          <p className="text-white/60 text-base">Your FIFA World Cup 2026 journey in numbers</p>
+        </div>
 
-          {/* Highlight row */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14, marginBottom: 28 }}>
-            {/* Prediction accuracy with circular progress */}
-            <div style={{ background: 'linear-gradient(135deg, rgba(249,184,0,0.12), rgba(249,184,0,0.04))', border: '1px solid rgba(249,184,0,0.25)', borderRadius: 20, padding: '20px', display: 'flex', alignItems: 'center', gap: 16, animation: 'glow 3s ease-in-out infinite' }}>
-              <CircularProgress percent={MOCK_STATS.predictionAccuracy} color="#f9b800" size={68} />
-              <div>
-                <div style={{ color: '#f9b800', fontSize: 28, fontWeight: 900 }}>
-                  <AnimatedCounter target={MOCK_STATS.predictionAccuracy} suffix="%" />
-                </div>
-                <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>Prediction Accuracy</div>
-                <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, marginTop: 4 }}>{MOCK_STATS.correctPredictions}/{MOCK_STATS.totalPredictions} correct</div>
+        {/* Highlight row */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+          {/* Prediction accuracy with circular progress */}
+          <div className="glass-card rounded-3xl p-6 flex items-center gap-6 border-primary/30 shadow-[0_0_40px_rgba(217,119,6,0.15)] relative overflow-hidden">
+            <div className="absolute inset-0 bg-primary/5"></div>
+            <CircularProgress percent={MOCK_STATS.predictionAccuracy} color="#d97706" size={80} />
+            <div className="relative z-10">
+              <div className="text-3xl font-black text-primary mb-1">
+                <AnimatedCounter target={MOCK_STATS.predictionAccuracy} suffix="%" />
               </div>
-            </div>
-
-            {/* Favorite team */}
-            <div style={{ background: 'rgba(0,156,59,0.08)', border: '1px solid rgba(0,156,59,0.2)', borderRadius: 20, padding: '20px' }}>
-              <div style={{ fontSize: 28, marginBottom: 8 }}>🇧🇷</div>
-              <div style={{ color: 'white', fontWeight: 700, fontSize: 15 }}>{MOCK_STATS.favoriteTeam}</div>
-              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, marginTop: 4 }}>Favorite Team</div>
-            </div>
-
-            {/* Favorite stadium */}
-            <div style={{ background: 'rgba(100,181,246,0.06)', border: '1px solid rgba(100,181,246,0.18)', borderRadius: 20, padding: '20px' }}>
-              <div style={{ fontSize: 28, marginBottom: 8 }}>🏟️</div>
-              <div style={{ color: 'white', fontWeight: 700, fontSize: 13, lineHeight: 1.3 }}>{MOCK_STATS.favoriteStadium}</div>
-              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, marginTop: 4 }}>Favorite Stadium</div>
+              <div className="text-white/60 text-xs font-bold uppercase tracking-widest mb-1">Prediction Accuracy</div>
+              <div className="text-white/40 text-xs">{MOCK_STATS.correctPredictions}/{MOCK_STATS.totalPredictions} correct</div>
             </div>
           </div>
 
-          {/* Tabs */}
-          <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 4, marginBottom: 28 }}>
-            {[
-              { key: 'stats' as const, label: '📊 Statistics' },
-              { key: 'achievements' as const, label: `🏆 Achievements (${unlockedCount}/${MOCK_ACHIEVEMENTS.length})` },
-            ].map(({ key, label }) => (
-              <button
-                key={key}
-                id={`tab-${key}`}
-                onClick={() => setActiveTab(key)}
-                style={{
-                  flex: 1, padding: '11px 16px', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, transition: 'all 0.2s',
-                  background: activeTab === key ? 'linear-gradient(135deg, #f9b800, #ff6b35)' : 'transparent',
-                  color: activeTab === key ? '#0a0a1a' : 'rgba(255,255,255,0.5)',
-                }}
-              >
-                {label}
-              </button>
-            ))}
+          {/* Favorite team */}
+          <div className="glass-card rounded-3xl p-6 relative overflow-hidden">
+            <div className="absolute inset-0 bg-emerald-500/5"></div>
+            <div className="text-4xl mb-4 relative z-10">🇧🇷</div>
+            <div className="text-white font-bold text-xl mb-1 relative z-10">{MOCK_STATS.favoriteTeam}</div>
+            <div className="text-white/50 text-xs font-bold uppercase tracking-widest relative z-10">Favorite Team</div>
+          </div>
+
+          {/* Favorite stadium */}
+          <div className="glass-card rounded-3xl p-6 relative overflow-hidden">
+            <div className="absolute inset-0 bg-sky-500/5"></div>
+            <div className="text-4xl mb-4 relative z-10">🏟️</div>
+            <div className="text-white font-bold text-lg leading-tight mb-1 relative z-10">{MOCK_STATS.favoriteStadium}</div>
+            <div className="text-white/50 text-xs font-bold uppercase tracking-widest relative z-10">Favorite Stadium</div>
           </div>
         </div>
 
+        {/* Tabs */}
+        <div className="flex gap-2 p-1 bg-white/5 rounded-xl border border-white/10 mb-8 backdrop-blur-sm max-w-md">
+          {[
+            { key: 'stats' as const, label: 'Statistics', icon: Target },
+            { key: 'achievements' as const, label: `Achievements (${unlockedCount})`, icon: Medal },
+          ].map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              onClick={() => setActiveTab(key)}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold rounded-lg transition-all ${
+                activeTab === key 
+                  ? 'bg-primary text-primary-foreground shadow-lg' 
+                  : 'text-white/50 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              {label}
+            </button>
+          ))}
+        </div>
+
         {/* Content */}
-        <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 24px 60px', animation: 'fadeUp 0.4s ease' }}>
+        <div className="animate-fade-in-up">
           {activeTab === 'stats' && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 14 }}>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {statItems.map(({ icon, label, value, color, suffix, prefix }, i) => (
-                <div key={label} style={{ animation: `fadeUp 0.4s ease ${i * 0.05}s both` }}>
+                <div key={label} className="animate-fade-in-up" style={{ animationDelay: `${i * 0.05}s` }}>
                   <StatCard icon={icon} label={label} value={value} color={color} suffix={suffix} prefix={prefix} />
                 </div>
               ))}
@@ -287,26 +264,31 @@ export default function StatisticsPage() {
           )}
 
           {activeTab === 'achievements' && (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-                <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>
-                  {unlockedCount} of {MOCK_ACHIEVEMENTS.length} achievements unlocked
+            <div className="animate-fade-in-up">
+              <div className="flex items-center justify-between mb-8 glass-panel p-6 rounded-2xl">
+                <div className="text-white/80 font-medium">
+                  <span className="text-2xl font-black text-primary mr-2">{unlockedCount}</span> 
+                  of {MOCK_ACHIEVEMENTS.length} unlocked
                 </div>
-                <div style={{ height: 6, width: 160, background: 'rgba(255,255,255,0.08)', borderRadius: 3, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${(unlockedCount / MOCK_ACHIEVEMENTS.length) * 100}%`, background: 'linear-gradient(90deg, #f9b800, #ff6b35)', borderRadius: 3, transition: 'width 1s ease' }} />
+                <div className="h-2 w-1/2 max-w-xs bg-white/10 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-primary to-amber-500 rounded-full transition-all duration-1000 ease-out" 
+                    style={{ width: `${completionPercentage}%` }} 
+                  />
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 14 }}>
+              
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {MOCK_ACHIEVEMENTS.map((achievement, i) => (
-                  <div key={achievement.id} style={{ animation: `fadeUp 0.4s ease ${i * 0.07}s both` }}>
+                  <div key={achievement.id} className="animate-fade-in-up" style={{ animationDelay: `${i * 0.07}s` }}>
                     <AchievementBadge achievement={achievement} />
                   </div>
                 ))}
               </div>
-            </>
+            </div>
           )}
         </div>
       </div>
-    </>
+    </main>
   );
 }
