@@ -1,4 +1,4 @@
-import { IKernel, ISessionContext } from '../interfaces';
+import { IKernel } from '../interfaces';
 
 export class MemoryAgent {
   /**

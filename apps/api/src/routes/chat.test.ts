@@ -34,6 +34,7 @@ vi.mock('../lib/db', () => ({
     },
     conversationTurn: {
       create: vi.fn().mockResolvedValue({}),
+      findMany: vi.fn().mockResolvedValue([]),
     },
     knowledgeChunk: {
       findMany: vi.fn().mockResolvedValue([]),

@@ -21,7 +21,7 @@ export class MockFootballProvider implements IFootballProvider {
 - England vs Argentina (Quarter-Final) | Sat Jul 11 2026, 18:00 EST`;
   }
 
-  async getLatestNews(topic?: string): Promise<string> {
+  async getLatestNews(_topic?: string): Promise<string> {
     return `Latest Football News:
 - Kylian Mbappe spotted training alone ahead of the crucial clash against Brazil.
 - FIFA announces new technology testing for the upcoming matches.`;

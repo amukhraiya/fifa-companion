@@ -13,7 +13,7 @@ export class FootballIntelligenceAgent {
   /**
    * Retrieves live football intelligence if the query requires it.
    */
-  async retrieve(query: string, kernel: IKernel): Promise<string> {
+  async retrieve(query: string, _kernel: IKernel): Promise<string> {
     const lower = query.toLowerCase();
     
     let needsLive = false;

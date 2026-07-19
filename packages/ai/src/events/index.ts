@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { IEventBus } from '../interfaces';
 
 export class EventBus implements IEventBus {
@@ -47,7 +47,7 @@ export class EventLogger {
           const typedPayload = payload as { userId?: string } | null | undefined;
           const userId = typedPayload?.userId || null;
           
-          await this.prisma.event.create({
+          await this.prisma?.event?.create({
             data: {
               userId,
               eventType: event,

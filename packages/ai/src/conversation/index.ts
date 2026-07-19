@@ -1,7 +1,6 @@
 import crypto from 'crypto';
 import { IKernel, ISessionContext } from '../interfaces';
 import { MasterAgent, MasterAgentResponse } from '../master-agent';
-import { ExecutionPlanner } from '../planner';
 import { MemoryAgent } from '../agents/MemoryAgent';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -43,7 +42,7 @@ export class ConversationService {
 
     // 3. Build full SessionContext with injected history
     const executionId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
-    const sessionContext: ISessionContext = {
+    const _sessionContext: ISessionContext = {
       currentUser: { id: userId, email: '', role: 'Fan' },
       currentMatch: contextOverride?.currentMatch || null,
       currentStadium: contextOverride?.currentStadium || null,

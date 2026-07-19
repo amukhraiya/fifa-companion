@@ -182,7 +182,7 @@ export const matchStatisticsTool: Tool<{ matchId: string }, { events: unknown[] 
     required: ['matchId'],
   },
   inputSchema: z.object({ matchId: z.string() }),
-  async execute(input) {
+  async execute(_input) {
     return {
       events: [
         { minute: 12, type: 'GOAL', team: 'Brazil', player: 'Vinícius Jr.', description: 'Curling strike into top right corner' },

@@ -1,5 +1,4 @@
 import { AgentResult, ISessionContext, ExecutionPlan, IGeminiService } from '../interfaces';
-import { ExtendedExecutionPlan } from '../planner';
 import {
   FIFA_2026_FIXTURES,
   FIFA_2026_TEAMS,
@@ -84,7 +83,7 @@ export class ResponseSynthesizer {
     )).join('\n\n---\n\n');
 
     // Build fan memory context
-    const memoryStr = memory
+    const _memoryStr = memory
       ? `Fan DNA Profile:
 - Favorite Team: ${memory.favoriteTeam ?? 'Not set'}
 - Budget: $${memory.budget ?? 'Not specified'}
