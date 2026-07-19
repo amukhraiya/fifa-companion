@@ -56,7 +56,7 @@ function getMockWallet(): WalletData {
   const base: Omit<TicketEntry, 'status' | 'ticketId'> = {
     matchName: 'Brazil vs Spain',
     venueName: 'Lusail Iconic Stadium',
-    matchDate: new Date(Date.now() + 86400000 * 12).toISOString(),
+    matchDate: '2026-06-18T20:00:00.000Z',
     gate: 'Gate C',
     section: 'C',
     row: '12',
@@ -75,7 +75,7 @@ function getMockWallet(): WalletData {
   const pastBase: Omit<TicketEntry, 'status' | 'ticketId'> = {
     matchName: 'Argentina vs France — Final',
     venueName: 'MetLife Stadium',
-    matchDate: new Date(Date.now() - 86400000 * 14).toISOString(),
+    matchDate: '2026-07-19T18:00:00.000Z',
     gate: 'Gate A',
     section: 'A',
     row: '5',

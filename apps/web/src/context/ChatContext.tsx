@@ -67,9 +67,20 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ email: 'fan@fifa.com', password: 'password123' }),
       });
       const data = await res.json();
-      if (res.ok && data.success && data.data.accessToken) {
+      if (res.ok && data.success && data.data?.accessToken) {
         localStorage.setItem('accessToken', data.data.accessToken);
         return data.data.accessToken;
+      }
+
+      // Guest fallback
+      const guestRes = await fetch(`${getApiUrl()}/api/v1/auth/guest-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const guestData = await guestRes.json();
+      if (guestRes.ok && guestData.success && guestData.data?.accessToken) {
+        localStorage.setItem('accessToken', guestData.data.accessToken);
+        return guestData.data.accessToken;
       }
     } catch (err) {
       // eslint-disable-next-line no-console

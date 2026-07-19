@@ -51,7 +51,7 @@ export class EventLogger {
             data: {
               userId,
               eventType: event,
-              payload: (payload as Prisma.InputJsonValue) || {},
+              payload: (payload as any) || {},
             },
           });
         } catch (error) {

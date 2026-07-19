@@ -23,6 +23,9 @@ body {
   background-color: var(--background);
   color: var(--foreground);
   overflow-x: hidden;
+  opacity: 1 !important;
+  visibility: visible !important;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
 @layer utilities {
@@ -30,7 +33,16 @@ body {
     @apply bg-black/40 backdrop-blur-md border border-white/10 shadow-xl;
   }
   .glass-card {
-    @apply bg-slate-900/60 backdrop-blur-sm border border-slate-700/50 shadow-lg hover:border-amber-500/50 transition-colors duration-300;
+    @apply bg-slate-900/60 backdrop-blur-sm border border-slate-700/50 shadow-lg hover:border-amber-500/50 transition-all duration-300;
+  }
+  .gold-glow {
+    box-shadow: 0 0 25px rgba(217, 119, 6, 0.25);
+  }
+  .emerald-glow {
+    box-shadow: 0 0 25px rgba(5, 150, 105, 0.25);
+  }
+  .stadium-light-bg {
+    background: radial-gradient(circle at 50% 0%, rgba(217, 119, 6, 0.12) 0%, rgba(11, 15, 25, 1) 70%);
   }
   
   /* Custom scrollbar for webkit */

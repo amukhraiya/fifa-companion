@@ -3,6 +3,13 @@ import { z } from 'zod';
 // -------------------------------------------------------------
 // 1. Session Context Interface
 // -------------------------------------------------------------
+export interface IActiveGoal {
+  objective: string;
+  constraints: Record<string, any>;
+  requiredConstraints: string[];
+  status: 'IN_PROGRESS' | 'COMPLETED';
+}
+
 export interface ISessionContext {
   currentUser: { id: string; email: string; role: string } | null;
   currentMatch: string | null;

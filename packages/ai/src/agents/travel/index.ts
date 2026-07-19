@@ -1,130 +1,69 @@
-import { IAgent, ISessionContext, IKernel, AgentResult } from '../../interfaces';
-import { AITravelRecommendationEngine } from '../../engine/travelRecommendation';
-import {
-  WeatherOutput,
-  RestaurantOutput,
-  StadiumGuideOutput,
-  HotelOutput,
-  MedicalOutput,
-  CrowdPredictionOutput,
-} from '../../tools';
+import type { AgentInvocation, AgentModule, AgentResult } from '@fifa/shared-types';
+import type { GeminiProvider } from '../../providers/gemini';
+import type { ToolRegistry } from '../../tools/registry';
+import { RagRetriever } from '../../rag/retrieve';
 
-export class TravelAgent implements IAgent {
-  name = 'TravelAgent';
-  version = '1.0.0';
-  description = 'Coordinates end-to-end travel itinerary planning, transit routing, weather advice, dining recommendations, and stadium navigation.';
-  capabilities = ['travel', 'routing', 'weather', 'dining', 'hotels', 'medical', 'crowd'];
-  priority = 10;
+const TRAVEL_TOOL_NAMES = ['getWeather', 'findRestaurants'];
 
-  async execute(context: ISessionContext, kernel: IKernel): Promise<AgentResult> {
-    const memory = context.fanMemory as Record<string, unknown> | null;
-    const stadiumId = 'stadium-100'; // Default fallback
-    const matchId = 'match-100'; // Default fallback
-    const userId = context.currentUser?.id || 'u-100';
+const SYSTEM_INSTRUCTION = `You are the Travel specialist inside the FIFA AI Companion.
+You build personalized, time-aware itineraries around a fan's match day, and
+answer free-form city-exploration questions ("I have 4 hours before kickoff").
 
-    try {
-      // 1. Execute Weather check
-      const weather = (await kernel.toolRegistry.executeTool('WeatherCheck', {
-        stadiumId,
-      })) as WeatherOutput;
+Rules you must follow:
+- Respect stated budget, group type (family/friends/solo), and dietary
+  preferences from memory when recommending restaurants or activities.
+- Be explicit about timing — every itinerary stop should have an estimated
+  time, not just an order.
+- Use tools for weather and restaurant data — never invent specific facts
+  about a real city or venue.
+- If a time constraint makes the request infeasible (e.g. "visit 5 museums in
+  1 hour"), say so plainly and offer a realistic alternative instead of
+  silently ignoring the constraint.`;
 
-      // 2. Execute Restaurant search
-      const budgetMax = typeof memory?.budget === 'number' ? memory.budget : undefined;
-      const accessibilityNeeds = typeof memory?.accessibilityNeeds === 'string' ? memory.accessibilityNeeds : 'None';
-      const restaurants = (await kernel.toolRegistry.executeTool('RestaurantSearch', {
-        stadiumId,
-        budgetMax,
-        dietaryFilters: accessibilityNeeds !== 'None' ? [accessibilityNeeds] : [],
-      })) as RestaurantOutput[];
+export function createTravelAgent(gemini: GeminiProvider, tools: ToolRegistry): AgentModule {
+  const scopedTools = tools.subset(TRAVEL_TOOL_NAMES);
 
-      // 3. Execute Stadium Guide check
-      const isAccessible = accessibilityNeeds !== 'None';
-      const stadiumGuide = (await kernel.toolRegistry.executeTool('StadiumGuideCheck', {
-        stadiumId,
-        accessibility: isAccessible,
-      })) as StadiumGuideOutput;
+  return {
+    name: 'travel',
+    description:
+      'Builds travel itineraries, recommends restaurants and attractions, and answers city-exploration questions.',
 
-      // 4. Execute Hotel search
-      const hotels = (await kernel.toolRegistry.executeTool('HotelSearch', {
-        stadiumId,
-        budgetMax,
-      })) as HotelOutput[];
+    async run(input: AgentInvocation): Promise<AgentResult> {
+      const grounding = RagRetriever.toGroundingText(input.ragContext);
+      const memoryContext = `Fan preferences: travel style=${input.memory.travelStyle ?? 'unstated'}, budget=${
+        input.memory.budget ?? 'unstated'
+      }, group type=${input.memory.groupType ?? 'unstated'}, food preference=${
+        input.memory.foodPreference ?? 'none stated'
+      }.`;
 
-      // 5. Execute Medical check
-      const medical = (await kernel.toolRegistry.executeTool('MedicalCheck', {
-        stadiumId,
-      })) as MedicalOutput;
-
-      // 6. Execute Crowd prediction
-      const crowd = (await kernel.toolRegistry.executeTool('CrowdPredictionCheck', {
-        stadiumId,
-      })) as CrowdPredictionOutput;
-
-      // 7. Calculate travel recommendations using our engine
-      const routeOptions = AITravelRecommendationEngine.getRecommendations({
-        userId,
-        stadiumId,
-        matchId,
-        userLocation: 'Doha Downtown',
-        budget: budgetMax || 1000,
-        accessibilityNeeds,
-        weatherForecast: weather?.icon || 'sunny',
+      const toolsUsed: string[] = [];
+      const round = await gemini.generateWithTools({
+        systemInstruction: SYSTEM_INSTRUCTION,
+        tools: scopedTools.asGeminiFunctionDeclarations(),
+        contents: [
+          { role: 'user', text: `${memoryContext}\n\nRelevant knowledge:\n${grounding}\n\nFan request: ${input.query}` },
+        ],
       });
 
-      // 8. Generate AI Day Planner and Leave Time recommendation
-      const selectedRoute = routeOptions.bestRoute;
-      const recommendedRestaurant = restaurants?.[0]?.name || 'Al Lusail Grill';
-      const kickoffTime = '18:30';
-
-      const leaveTimeMinutes = selectedRoute.estimatedTimeMinutes + crowd.waitTimeMinutes + 30; // Travel + Queue + Buffer
-      const leaveHour = 18;
-      let leaveMin = 30 - leaveTimeMinutes;
-      let adjustedHour = leaveHour;
-      if (leaveMin < 0) {
-        adjustedHour -= 1;
-        leaveMin += 60;
+      let toolOutputSummary = '';
+      for (const call of round.functionCalls) {
+        const result = await scopedTools.execute(call.name!, call.args, {
+          userId: input.userId,
+          memory: input.memory,
+        });
+        toolsUsed.push(call.name!);
+        toolOutputSummary += `\n\nTool "${call.name}" result: ${JSON.stringify(result)}`;
       }
-      const leaveTimeStr = `${adjustedHour.toString().padStart(2, '0')}:${leaveMin.toString().padStart(2, '0')}`;
 
-      const dayPlanner = [
-        { time: leaveTimeStr, title: 'Depart Home / Hotel', description: `Commute via ${selectedRoute.routeName} (${selectedRoute.mode}).` },
-        { time: '17:30', title: 'Dine at Local Spot', description: `Enjoy food at ${recommendedRestaurant} near the stadium.` },
-        { time: '18:00', title: 'Arrive at Security Check', description: `Head to ${stadiumGuide.entryGate}. Crowd wait time is ${crowd.waitTimeMinutes} mins.` },
-        { time: '18:20', title: 'Find Your Seat', description: `Navigate to Section ${stadiumGuide.restrooms.split(' ')[0]}.` },
-        { time: kickoffTime, title: 'Kickoff Starts', description: 'Enjoy the match!' },
-      ];
+      if (round.functionCalls.length > 0) {
+        const finalText = await gemini.generateText(
+          SYSTEM_INSTRUCTION,
+          `Fan request: ${input.query}\n${toolOutputSummary}\n\nWrite the final itinerary/answer for the fan.`,
+        );
+        return { summary: finalText, toolsUsed, data: { toolOutputSummary } };
+      }
 
-      return {
-        agentName: this.name,
-        success: true,
-        data: {
-          weather,
-          restaurants,
-          stadiumGuide,
-          hotels,
-          medical,
-          crowd,
-          routes: routeOptions,
-          leaveTimeRecommendation: {
-            suggestedLeaveTime: leaveTimeStr,
-            totalTravelTimeMinutes: selectedRoute.estimatedTimeMinutes,
-            queueTimeMinutes: crowd.waitTimeMinutes,
-            reason: `Based on your chosen mode (${selectedRoute.mode}) and current ${crowd.crowdDensity.toLowerCase()} crowd density at the gate.`,
-          },
-          dayPlanner,
-        },
-        confidence: 0.95,
-        reasoning: `Planned journey for user using ${selectedRoute.mode} transit. Factored weather forecast (${weather.temperature}°C) and ${crowd.crowdDensity.toLowerCase()} crowd levels.`,
-      };
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Travel Agent execution failed';
-      return {
-        agentName: this.name,
-        success: false,
-        data: { error: msg },
-        confidence: 0.0,
-        reasoning: `Encountered execution error: ${msg}`,
-      };
-    }
-  }
+      return { summary: round.text ?? '', toolsUsed };
+    },
+  };
 }

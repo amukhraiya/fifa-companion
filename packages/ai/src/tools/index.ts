@@ -109,24 +109,24 @@ export class SearchSeatsTool extends BaseTool<SearchSeatsInput, SeatSearchResult
 
       let filtered = seats;
       if (input.stadiumId) {
-        filtered = filtered.filter((s) => s.match.venueId === input.stadiumId);
+        filtered = filtered.filter((s: any) => s.match.venueId === input.stadiumId);
       }
       if (input.teamId) {
-        filtered = filtered.filter((s) => s.match.teams.some((t) => t.teamId === input.teamId));
+        filtered = filtered.filter((s: any) => s.match.teams.some((t: any) => t.teamId === input.teamId));
       }
 
       // Sort
       if (input.sortBy === 'cheapest') {
-        filtered.sort((a, b) => a.price - b.price);
+        filtered.sort((a: any, b: any) => a.price - b.price);
       } else if (input.sortBy === 'premium') {
-        filtered.sort((a, b) => b.price - a.price);
+        filtered.sort((a: any, b: any) => b.price - a.price);
       } else if (input.sortBy === 'midfield') {
-        filtered.sort((a, _b) => (a.row === 'A' || a.row === 'B' ? -1 : 1));
+        filtered.sort((a: any, _b: any) => (a.row === 'A' || a.row === 'B' ? -1 : 1));
       } else if (input.sortBy === 'family') {
-        filtered.sort((a, _b) => (a.section.includes('3') ? -1 : 1));
+        filtered.sort((a: any, _b: any) => (a.section.includes('3') ? -1 : 1));
       }
 
-      return filtered.map((s) => ({
+      return filtered.map((s: any) => ({
         id: s.id,
         matchId: s.matchId,
         section: s.section,
@@ -136,7 +136,7 @@ export class SearchSeatsTool extends BaseTool<SearchSeatsInput, SeatSearchResult
         status: s.status,
         match: {
           venue: { name: s.match.venue.name },
-          teams: s.match.teams.map((t) => ({ team: { name: t.team.name } })),
+          teams: s.match.teams.map((t: any) => ({ team: { name: t.team.name } })),
         },
       }));
     } catch {

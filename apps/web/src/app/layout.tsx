@@ -4,6 +4,7 @@ import './globals.css';
 import DemoOverlay from '../components/DemoOverlay';
 import { ChatProvider } from '../context/ChatContext';
 import CommanderAIWidget from '../components/CommanderAIWidget';
+import DashboardButton from '../components/DashboardButton';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -30,6 +31,7 @@ export default function RootLayout({
       <body className="antialiased min-h-screen bg-background text-foreground font-sans selection:bg-primary/30 selection:text-primary-foreground">
         <ChatProvider>
           {children}
+          <DashboardButton />
           <DemoOverlay />
           <CommanderAIWidget />
         </ChatProvider>

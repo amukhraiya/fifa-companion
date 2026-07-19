@@ -21,8 +21,19 @@ export * from './agents/matchCompanion';
 export * from './agents/wallet';
 export * from './agents/postMatch';
 
-// Tools
+export { createBookingAgent as BookingAgent } from './agents/booking';
+export { createTravelAgent as TravelAgent } from './agents/travel';
+export { createMatchCompanionAgent as MatchCompanionAgent } from './agents/matchCompanion';
+
+// Tools & Providers
 export * from './tools';
+export * from './providers/gemini';
+export { ToolRegistry as V2ToolRegistry } from './tools/registry';
+export * from './tools/placeholders';
+export * from './memory/fanMemory.service';
+export { ConversationService as V2ConversationService } from './memory/conversation.service';
+export * from './rag/retrieve';
+export { EventBus as V2EventBus, registerCoreEventFlows } from './events/bus';
 
 // Milestone 7 — Simulation Engines
 export * from './engine/recommendation';
@@ -44,3 +55,6 @@ export * from './engine/memory';
 export * from './engine/wallet';
 export * from './engine/validation';
 export * from './engine/shareCard';
+
+// FIFA 2026 Demo Dataset
+export * from './data/fifaFixtures';

@@ -84,8 +84,19 @@ export default function DashboardPage() {
         body: JSON.stringify({ email: 'fan@fifa.com', password: 'password123' }),
       });
       const data = await res.json();
-      if (res.ok && data.success && data.data.accessToken) {
+      if (res.ok && data.success && data.data?.accessToken) {
         const accessToken = data.data.accessToken as string;
+        localStorage.setItem('accessToken', accessToken);
+        return accessToken;
+      }
+
+      const guestRes = await fetch(`${getApiUrl()}/api/v1/auth/guest-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const guestData = await guestRes.json();
+      if (guestRes.ok && guestData.success && guestData.data?.accessToken) {
+        const accessToken = guestData.data.accessToken as string;
         localStorage.setItem('accessToken', accessToken);
         return accessToken;
       }

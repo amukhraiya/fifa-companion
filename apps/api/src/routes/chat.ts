@@ -37,12 +37,16 @@ chatRouter.post(
       res.setHeader('Connection', 'keep-alive');
       res.flushHeaders();
 
+      console.log(`\n[AI TRACE] INPUT RECEIVED: "${parsed.message}"`);
+
       // Trigger orchestrator run
       const agentResponse = await conversationService.sendMessage(
         userId,
         conversationId,
         parsed.message,
       );
+
+      console.log(`[AI TRACE] CHAT RESPONSE: "${agentResponse.response.substring(0, 100)}..."`);
 
       // Stream words asynchronously to simulate/expose a streaming interface
       const words = agentResponse.response.split(' ');
@@ -61,8 +65,8 @@ chatRouter.post(
       res.write(
         `data: ${JSON.stringify({
           done: true,
-          traceId: agentResponse.traceId,
-          explanation: agentResponse.explanation,
+          traceId: (agentResponse as any).traceId,
+          explanation: (agentResponse as any).explanation,
         })}\n\n`,
       );
       res.end();

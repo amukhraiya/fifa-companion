@@ -116,7 +116,7 @@ authRouter.post('/register', async (req: Request, res: Response): Promise<void> 
     const authUser = await authService.register(email, password);
 
     // 2. Perform DB updates in Transaction
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       // Check if user already exists locally (Firebase may have created but local sync failed previously)
       let user = await tx.user.findUnique({
         where: { email },
@@ -287,7 +287,7 @@ authRouter.post('/google', async (req: Request, res: Response): Promise<void> =>
     logger.info({ email: authUser.email }, 'Google authentication token verified');
 
     // 2. Perform DB operations in Transaction
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       let user = await tx.user.findUnique({
         where: { email: authUser.email },
       });
@@ -373,7 +373,7 @@ authRouter.post('/guest-login', async (req: Request, res: Response): Promise<voi
   try {
     logger.info('Creating temporary Guest session');
 
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       // 1. Create a guest user (unique email generated dynamically)
       const guestId = crypto.randomUUID();
       const guest = await tx.user.create({
@@ -488,7 +488,7 @@ authRouter.post('/refresh', async (req: Request, res: Response): Promise<void> =
     const hashedNewToken = hashToken(newRefreshToken);
 
     // 6. Perform rotation in transaction
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       // Revoke the old token and mark replacement
       await tx.refreshToken.update({
         where: { id: tokenRecord.id },
@@ -542,7 +542,7 @@ authRouter.post('/logout', async (req: Request, res: Response): Promise<void> =>
       const payload = verifyRefreshToken(oldRefreshToken);
       const hashed = hashToken(oldRefreshToken);
 
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx: any) => {
         // Revoke the refresh token record in DB
         await tx.refreshToken.updateMany({
           where: { token: hashed },

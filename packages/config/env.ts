@@ -18,6 +18,8 @@ const envSchema = z.object({
   FIREBASE_PRIVATE_KEY: z.string().default('mock-private-key'),
   FIREBASE_API_KEY: z.string().default('mock-api-key'),
   AUTH_PROVIDER: z.enum(['firebase', 'mock']).default('mock'),
+  GEMINI_API_KEY: z.string().optional(),
+  GEMINI_MODEL: z.string().default('gemini-1.5-flash'),
 });
 
 // For build-time compilation where env vars might not be present, we can bypass strict validation

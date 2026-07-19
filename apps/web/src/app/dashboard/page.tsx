@@ -21,9 +21,19 @@ export default function DashboardPage() {
         body: JSON.stringify({ email: 'fan@fifa.com', password: 'password123' }),
       });
       const data = await res.json();
-      if (res.ok && data.success && data.data.accessToken) {
+      if (res.ok && data.success && data.data?.accessToken) {
         localStorage.setItem('accessToken', data.data.accessToken);
         return data.data.accessToken;
+      }
+
+      const guestRes = await fetch(`${getApiUrl()}/api/v1/auth/guest-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const guestData = await guestRes.json();
+      if (guestRes.ok && guestData.success && guestData.data?.accessToken) {
+        localStorage.setItem('accessToken', guestData.data.accessToken);
+        return guestData.data.accessToken;
       }
     } catch (err) {
       // eslint-disable-next-line no-console
@@ -146,35 +156,61 @@ export default function DashboardPage() {
 
         {/* Commander AI Hero */}
         <section>
-          <div className="w-full relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-600/90 via-amber-500/80 to-emerald-600/90 border border-amber-400/30 p-8 md:p-12 shadow-[0_0_40px_rgba(217,119,6,0.2)] flex flex-col md:flex-row items-center justify-between group">
+          <div className="w-full relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-600/90 via-amber-500/80 to-emerald-600/90 border border-amber-400/30 p-8 md:p-12 shadow-[0_0_40px_rgba(217,119,6,0.2)] group">
             {/* Background effects */}
             <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-10 mix-blend-overlay"></div>
             <div className="absolute -right-20 -top-20 w-64 h-64 bg-white/10 blur-[60px] rounded-full mix-blend-screen transition-transform group-hover:scale-150 duration-700"></div>
 
-            <div className="relative z-10 max-w-2xl text-left space-y-4 mb-8 md:mb-0">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-white text-[10px] font-black uppercase tracking-widest backdrop-blur-md">
-                <Bot className="w-3 h-3" />
-                Always Listening
+            <div className="relative z-10 flex flex-col md:flex-row items-start justify-between gap-8">
+              {/* Left — Identity */}
+              <div className="max-w-xl space-y-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-white text-[10px] font-black uppercase tracking-widest backdrop-blur-md">
+                  <Bot className="w-3 h-3 animate-pulse" />
+                  Powered by Gemini AI · Prompt Wars RC
+                </div>
+                <h2 className="text-3xl md:text-5xl font-black text-white leading-tight">
+                  Ask Commander AI
+                </h2>
+                <p className="text-white/90 text-base font-medium leading-relaxed">
+                  I reason, plan, and orchestrate multiple agents to answer your questions — not just look up keywords.
+                  Tell me your goal and I will handle the rest.
+                </p>
+                <Link
+                  href="/chat"
+                  className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-white text-slate-950 hover:bg-slate-50 transition-all font-black text-base shadow-xl hover:scale-105 active:scale-95"
+                >
+                  <MessageSquare className="w-5 h-5 text-amber-600" />
+                  Open AI Workspace
+                </Link>
               </div>
-              <h2 className="text-3xl md:text-5xl font-black text-white leading-tight">
-                Ask Commander AI
-              </h2>
-              <p className="text-white/90 text-lg font-medium leading-relaxed">
-                Need to change a booking? Want to know the fastest route to the stadium? Curious about Messi&apos;s stats? I am here to orchestrate your perfect World Cup.
-              </p>
-            </div>
 
-            <div className="relative z-10 w-full md:w-auto">
-              <Link
-                href="/chat"
-                className="w-full md:w-auto flex items-center justify-center gap-3 px-8 py-5 rounded-2xl bg-white text-slate-950 hover:bg-slate-50 transition-all font-black text-lg shadow-xl hover:scale-105 active:scale-95"
-              >
-                <MessageSquare className="w-6 h-6 text-amber-600" />
-                Open AI Workspace
-              </Link>
+              {/* Right — Suggested Prompts */}
+              <div className="w-full md:w-auto space-y-3 min-w-[280px]">
+                <span className="block text-[10px] font-black uppercase tracking-widest text-white/70 mb-3">
+                  Try asking...
+                </span>
+                {[
+                  'Plan my World Cup trip under \u20b975,000',
+                  'Find the cheapest Brazil match',
+                  'Compare France vs Germany fixtures',
+                  'Create a 5-day itinerary for the Final',
+                  'Help me reach the stadium from my hotel',
+                  'Summarize the football schedule',
+                ].map((prompt) => (
+                  <Link
+                    key={prompt}
+                    href={`/chat?prompt=${encodeURIComponent(prompt)}`}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-white text-sm font-medium transition-all hover:scale-[1.02] backdrop-blur-sm"
+                  >
+                    <Bot className="w-3 h-3 flex-shrink-0 text-white/70" />
+                    {prompt}
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
         </section>
+
 
         {/* Modules Grid */}
         <section>

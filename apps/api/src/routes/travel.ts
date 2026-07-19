@@ -191,7 +191,7 @@ travelRouter.post('/start-journey', async (req: AuthenticatedRequest, res: Respo
 
   try {
     // 1. Transactionally write the travel history and update preferences
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       const history = await tx.travelHistory.create({
         data: {
           userId,

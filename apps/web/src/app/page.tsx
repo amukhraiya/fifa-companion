@@ -61,7 +61,7 @@ export default function Home() {
       </div>
 
       {/* Features Grid */}
-      <div className="relative z-10 grid text-left w-full max-w-7xl md:grid-cols-2 lg:grid-cols-4 gap-6 px-6 pb-24 mt-32 animate-fade-in" style={{ animationDelay: '0.4s', animationFillMode: 'both' }}>
+      <div className="relative z-10 grid text-left w-full max-w-7xl md:grid-cols-2 lg:grid-cols-4 gap-6 px-6 pb-24 mt-32">
         {[
           {
             title: "Smart Booking",

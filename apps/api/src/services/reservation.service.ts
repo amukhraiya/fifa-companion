@@ -14,7 +14,7 @@ export class ReservationService {
    */
   async lockSeat(userId: string, seatId: string): Promise<{ success: boolean; lock?: unknown; error?: string }> {
     try {
-      return await this.prisma.$transaction(async (tx) => {
+      return await this.prisma.$transaction(async (tx: any) => {
         const seat = await tx.seat.findUnique({
           where: { id: seatId },
         });
@@ -57,7 +57,7 @@ export class ReservationService {
    */
   async confirmBooking(userId: string, seatId: string): Promise<{ success: boolean; ticket?: unknown; error?: string }> {
     try {
-      return await this.prisma.$transaction(async (tx) => {
+      return await this.prisma.$transaction(async (tx: any) => {
         const seat = await tx.seat.findUnique({
           where: { id: seatId },
           include: { lock: true, match: { include: { venue: { include: { city: true } } } } },
@@ -134,7 +134,7 @@ export class ReservationService {
    */
   async releaseSeat(userId: string, seatId: string): Promise<void> {
     try {
-      await this.prisma.$transaction(async (tx) => {
+      await this.prisma.$transaction(async (tx: any) => {
         const lock = await tx.seatLock.findUnique({
           where: { seatId },
         });

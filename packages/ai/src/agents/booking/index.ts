@@ -1,60 +1,70 @@
-import { IAgent, ISessionContext, IKernel, AgentResult } from '../../interfaces';
-import { aiSeatRecommendationEngine } from '../../engine/recommendation';
+import type { AgentInvocation, AgentModule, AgentResult } from '@fifa/shared-types';
+import type { GeminiProvider } from '../../providers/gemini';
+import type { ToolRegistry } from '../../tools/registry';
+import { RagRetriever } from '../../rag/retrieve';
 
-export class BookingAgent implements IAgent {
-  name = 'BookingAgent';
-  version = '1.0.0';
-  description = 'Handles match ticket booking and seat recommendations.';
-  capabilities = ['booking'];
-  priority = 10;
+const BOOKING_TOOL_NAMES = ['searchSeats', 'reserveSeat'];
 
-  async execute(context: ISessionContext, kernel: IKernel): Promise<AgentResult> {
-    const searchTool = kernel.toolRegistry.getTool('SearchSeats');
-    const reserveTool = kernel.toolRegistry.getTool('ReserveSeat');
+const SYSTEM_INSTRUCTION = `You are the Booking specialist inside the FIFA AI Companion.
+You find and explain seat recommendations, and coordinate seat locking.
 
-    if (!searchTool || !reserveTool) {
-      return {
-        agentName: this.name,
-        success: false,
-        data: { error: 'Required booking tools are missing' },
-        confidence: 0.0,
-        reasoning: 'Failed to resolve booking tools from registry.',
-      };
-    }
+Rules you must follow:
+- Every seat you recommend MUST include a concrete, specific explanation
+  (price relative to alternatives, proximity to something relevant, an
+  accessibility fact, or a supporter-section fact) — never recommend a seat
+  with no stated reason.
+- Respect the fan's budget and stated preferences from memory and the query.
+- If the user's request is ambiguous (e.g. no team/match named), ask a single
+  clarifying question instead of guessing.
+- Use the provided tools for anything involving real seat data — never invent
+  seat numbers, prices, or availability.`;
 
-    try {
-      // 1. Fetch seats from tool search
-      const seats = (await kernel.toolRegistry.executeTool('SearchSeats', {})) as Parameters<
-        typeof aiSeatRecommendationEngine.recommendSeats
-      >[1];
+export function createBookingAgent(gemini: GeminiProvider, tools: ToolRegistry): AgentModule {
+  const scopedTools = tools.subset(BOOKING_TOOL_NAMES);
 
-      // 2. Generate recommendations from engine
-      const recommendations = await aiSeatRecommendationEngine.recommendSeats(context, seats);
+  return {
+    name: 'booking',
+    description:
+      'Handles ticket search, seat recommendation and explanation, seat locking, and payment coordination.',
 
-      const topRec = recommendations[0];
+    async run(input: AgentInvocation): Promise<AgentResult> {
+      const grounding = RagRetriever.toGroundingText(input.ragContext);
+      const memoryContext = `Fan preferences: favorite team=${input.memory.favoriteTeam ?? 'unknown'}, budget=${
+        input.memory.budget ?? 'unstated'
+      }, seat preference=${input.memory.seatPreference ?? 'none stated'}.`;
 
-      return {
-        agentName: this.name,
-        success: true,
-        data: {
-          recommendations,
-          topRecommendation: topRec || null,
-          seatsCount: seats.length,
-        },
-        confidence: topRec ? topRec.confidence : 0.8,
-        reasoning: topRec
-          ? `Recommended seat ${topRec.row}-${topRec.number} in ${topRec.section} at ${topRec.stadiumName} (Confidence: ${topRec.confidence}).`
-          : 'No available seat matches found.',
-      };
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'BookingAgent execution failed';
-      return {
-        agentName: this.name,
-        success: false,
-        data: { error: msg },
-        confidence: 0.0,
-        reasoning: `BookingAgent execution aborted: ${msg}`,
-      };
-    }
-  }
+      const toolsUsed: string[] = [];
+      let round = await gemini.generateWithTools({
+        systemInstruction: SYSTEM_INSTRUCTION,
+        tools: scopedTools.asGeminiFunctionDeclarations(),
+        contents: [
+          { role: 'user', text: `${memoryContext}\n\nRelevant knowledge:\n${grounding}\n\nFan request: ${input.query}` },
+        ],
+      });
+
+      let toolOutputSummary = '';
+      // Single-round tool use is sufficient for the MVP's booking flows
+      // (search, then optionally reserve) — extend to a loop if a future
+      // task needs multi-step tool chains.
+      for (const call of round.functionCalls) {
+        const result = await scopedTools.execute(call.name!, call.args, {
+          userId: input.userId,
+          memory: input.memory,
+        });
+        toolsUsed.push(call.name!);
+        toolOutputSummary += `\n\nTool "${call.name}" result: ${JSON.stringify(result)}`;
+      }
+
+      if (round.functionCalls.length > 0) {
+        // Second pass: turn the tool output into the fan-facing explanation.
+        const finalText = await gemini.generateText(
+          SYSTEM_INSTRUCTION,
+          `Fan request: ${input.query}\n${toolOutputSummary}\n\nWrite the final recommendation for the fan, following the explanation rules.`,
+        );
+        return { summary: finalText, toolsUsed, data: { toolOutputSummary } };
+      }
+
+      return { summary: round.text ?? '', toolsUsed };
+    },
+  };
 }

@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Bot, User, ChevronDown, ChevronUp, CheckCircle2, Terminal, Code2, ArrowRight, Activity, Search, Sparkles } from 'lucide-react';
 import { useChat } from '../../context/ChatContext';
 
-export default function ChatPage() {
+// Inner component — uses useSearchParams which requires Suspense
+function ChatPageInner() {
   const {
     messages,
     input,
@@ -22,6 +24,18 @@ export default function ChatPage() {
 
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
+  const searchParams = useSearchParams();
+
+  // Auto-fill prompt from URL query parameter (from dashboard suggested prompts)
+  useEffect(() => {
+    const urlPrompt = searchParams.get('prompt');
+    if (urlPrompt && messages.length === 0) {
+      setInput(urlPrompt);
+      // Auto-focus so user can immediately see the pre-filled message
+      setTimeout(() => messageInputRef.current?.focus(), 200);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -71,10 +85,12 @@ export default function ChatPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full">
                 {[
-                  { icon: Sparkles, title: 'Cheapest Tickets', desc: 'Find lowest ticket prices for Brazil match', query: 'I want the cheapest Brazil match tickets' },
-                  { icon: Sparkles, title: 'VIP Tickets', desc: 'Book VIP midfield category seats', query: 'I want VIP seats for the final' },
-                  { icon: Sparkles, title: 'Stadium Travel', desc: 'Check travel times to Lusail Stadium', query: 'How do I travel to the Lusail stadium?' },
-                  { icon: Sparkles, title: 'Match Discovery', desc: 'Find matches featuring Argentina', query: 'Recommend a match that features Argentina' },
+                  { icon: Sparkles, title: 'World Cup Trip', desc: 'Plan my World Cup trip under ₹75,000', query: 'Plan my World Cup trip under ₹75,000' },
+                  { icon: Sparkles, title: 'Cheapest Match', desc: 'Find the cheapest Brazil match available', query: 'Find the cheapest Brazil match' },
+                  { icon: Sparkles, title: 'Compare Fixtures', desc: 'Compare France vs Germany matches', query: 'Compare France vs Germany matches' },
+                  { icon: Sparkles, title: '5-Day Itinerary', desc: 'Build a 5-day plan around the Final', query: 'Create a 5-day itinerary around the final' },
+                  { icon: Sparkles, title: 'Stadium Route', desc: 'Help me reach the stadium from my hotel', query: 'Help me reach the stadium from my hotel' },
+                  { icon: Sparkles, title: 'Best Recommendation', desc: 'Based on my previous chats and preferences', query: 'Recommend the best experience based on my previous chats' },
                 ].map((s, i) => (
                   <button
                     key={s.title}
@@ -282,5 +298,17 @@ export default function ChatPage() {
         )}
       </aside>
     </main>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+      </div>
+    }>
+      <ChatPageInner />
+    </Suspense>
   );
 }

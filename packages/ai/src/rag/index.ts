@@ -21,7 +21,7 @@ export class RAGService implements IRAGProvider {
       take: limit,
     });
 
-    return chunks.map((chunk) => {
+    return chunks.map((chunk: any) => {
       return {
         id: chunk.id,
         sourceType: chunk.sourceType,

@@ -6,7 +6,7 @@ import { logger } from './lib/logger';
 import { healthRouter } from './routes/health';
 import { authRouter } from './routes/auth';
 import { usersRouter } from './routes/users';
-import { chatRouter } from './routes/chat';
+import { chatRouter } from './routes/chat.routes';
 import { bookingRouter } from './routes/booking';
 import { travelRouter } from './routes/travel';
 import { matchdayRouter } from './routes/matchday';

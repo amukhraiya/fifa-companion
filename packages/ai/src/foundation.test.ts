@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { z } from 'zod';
 import { AgentRegistry, ToolRegistry } from './registry';
 import { SessionContext } from './context';
@@ -28,14 +28,14 @@ class MockMemoryService {
 }
 
 const mockAgent: IAgent = {
-  name: 'TestBookingAgent',
+  name: 'BookingAgent',
   version: '1.0.0',
   description: 'Handles seat bookings',
   capabilities: ['booking'],
   priority: 10,
   execute: async (_context, _kernel) => {
     return {
-      agentName: 'TestBookingAgent',
+      agentName: 'BookingAgent',
       success: true,
       data: { message: 'Booking processed successfully.' },
       confidence: 0.95,
@@ -73,7 +73,7 @@ describe('1. Registry Tests', () => {
     const registry = new AgentRegistry();
     registry.registerAgent(mockAgent);
     
-    expect(registry.getAgent('TestBookingAgent')).toBe(mockAgent);
+    expect(registry.getAgent('BookingAgent')).toBe(mockAgent);
     expect(registry.listAgents().length).toBe(1);
   });
 
@@ -83,7 +83,7 @@ describe('1. Registry Tests', () => {
 
     const bookingAgents = registry.findAgentsByCapability('booking');
     expect(bookingAgents.length).toBe(1);
-    expect(bookingAgents[0]?.name).toBe('TestBookingAgent');
+    expect(bookingAgents[0]?.name).toBe('BookingAgent');
 
     const travelAgents = registry.findAgentsByCapability('travel');
     expect(travelAgents.length).toBe(0);
@@ -137,13 +137,13 @@ describe('3. Execution Planner Tests', () => {
     
     // Test transactional intent mapping
     const plan = await planner.plan('I want to book seat tickets', context, kernel);
-    expect(plan.intent).toBe('booking');
+    expect(plan.intent).toBe('BOOK_TICKET');
     expect(plan.steps.length).toBe(1);
-    expect(plan.steps[0]?.agentName).toBe('TestBookingAgent');
+    expect(plan.steps[0]?.agentName).toBe('BookingAgent');
 
     // Test default fallback
     const fallbackPlan = await planner.plan('Hello there', context, kernel);
-    expect(fallbackPlan.intent).toBe('q&a');
+    expect(fallbackPlan.intent).toBe('GENERAL_CHAT');
     expect(fallbackPlan.steps.length).toBe(0);
   });
 });
@@ -172,32 +172,31 @@ describe('5. Prompt Manager Tests', () => {
 
 describe('6. Observability and Master Agent Tests', () => {
   it('should complete coordinated Master Agent turns and write trace telemetry', async () => {
-    const kernel: IKernel = {
-      agentRegistry: new AgentRegistry(),
-      toolRegistry: new ToolRegistry(),
-      eventBus: new EventBus(),
-      observability: new ObservabilityService(),
-      memoryService: new MockMemoryService(),
-      ragProvider: new MockRAGProvider(),
-      geminiService: new MockGeminiService(),
-    };
-    kernel.agentRegistry.registerAgent(mockAgent);
+    const mockGemini = {
+      generateWithTools: vi.fn().mockResolvedValue({
+        functionCalls: [{ name: 'invokeBookingAgent', args: { query: 'book seats for the game' } }],
+        text: null,
+      }),
+      generateText: vi.fn().mockResolvedValue('I can certainly help you with ticketing'),
+      embed: vi.fn().mockResolvedValue(new Array(768).fill(0)),
+    } as any;
 
-    const planner = new ExecutionPlanner();
-    const master = new MasterAgent(kernel, planner);
-    const context = new SessionContext({
-      fanMemory: { favoriteTeam: 'France' },
+    const master = new MasterAgent({
+      gemini: mockGemini,
+      fanMemory: { get: vi.fn().mockResolvedValue({ userId: 'u1', favoriteTeam: 'France' }), update: vi.fn().mockResolvedValue({}) } as any,
+      conversation: { getRecentTurns: vi.fn().mockResolvedValue([]), append: vi.fn().mockResolvedValue(undefined) } as any,
+      rag: { retrieve: vi.fn().mockResolvedValue([]) } as any,
+      eventBus: { emit: vi.fn().mockResolvedValue(undefined) } as any,
+      agents: {
+        booking: { name: 'booking', description: '', run: vi.fn().mockResolvedValue({ summary: 'I can certainly help you with ticketing', toolsUsed: [] }) },
+        travel: { name: 'travel', description: '', run: vi.fn() },
+        matchCompanion: { name: 'matchCompanion', description: '', run: vi.fn() },
+      },
     });
 
-    const result = await master.handleMessage('book seats for the game', context);
-    expect(result.response).toContain('Booking processed successfully.');
-    expect(result.traceId).toBeDefined();
-
-    const trace = kernel.observability.getTrace(result.traceId);
-    expect(trace).toBeDefined();
-    expect(trace?.intent).toBe('booking');
-    expect(trace?.success).toBe(true);
-    expect(trace?.reasoningPath.length).toBeGreaterThan(0);
-    expect(trace?.memoryReads).toContain('fanMemory');
+    const result = await master.handleMessage('u1', 'book seats for the game');
+    expect(result.response).toContain('I can certainly help you with ticketing');
+    expect(result.conversationId).toBeDefined();
+    expect(result.agentTrace.some(t => t.agent === 'booking')).toBe(true);
   });
 });
