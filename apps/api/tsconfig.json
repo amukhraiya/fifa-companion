@@ -4,7 +4,13 @@
     "outDir": "./dist",
     "noEmit": false,
     "declaration": false,
-    "declarationMap": false
+    "declarationMap": false,
+    "baseUrl": ".",
+    "paths": {
+      "@fifa/config": ["../../packages/config/env.ts"],
+      "@fifa/shared-types": ["../../packages/shared-types/src/index.ts"],
+      "@fifa/ai": ["../../packages/ai/src/index.ts"]
+    }
   },
   "include": ["src/**/*"]
 }

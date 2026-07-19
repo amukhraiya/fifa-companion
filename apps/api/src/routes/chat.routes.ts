@@ -44,9 +44,9 @@ chatRouter.post('/', RequireAuth, async (req: AuthenticatedRequest, res: Respons
         executionId: result.conversationId,
         timestamp: new Date().toISOString(),
         intent: result.agentTrace[1]?.agent || 'GENERAL',
-        agent: result.agentTrace.map((t) => t.agent).join(', '),
-        tools: result.agentTrace.flatMap((t) => t.toolsUsed || []),
-        reasoningPath: result.agentTrace.map((t) => `${t.agent}: ${t.summary}`),
+        agent: result.agentTrace.map((t: any) => t.agent).join(', '),
+        tools: result.agentTrace.flatMap((t: any) => t.toolsUsed || []),
+        reasoningPath: result.agentTrace.map((t: any) => `${t.agent}: ${t.summary}`),
         success: true,
       });
     }
@@ -95,9 +95,9 @@ chatRouter.post('/stream', RequireAuth, async (req: AuthenticatedRequest, res: R
       executionId: traceId,
       timestamp: new Date().toISOString(),
       intent: result.agentTrace[1]?.agent || 'GENERAL',
-      agent: result.agentTrace.map((t) => t.agent).join(', '),
-      tools: result.agentTrace.flatMap((t) => t.toolsUsed || []),
-      reasoningPath: result.agentTrace.map((t) => `${t.agent}: ${t.summary}`),
+      agent: result.agentTrace.map((t: any) => t.agent).join(', '),
+      tools: result.agentTrace.flatMap((t: any) => t.toolsUsed || []),
+      reasoningPath: result.agentTrace.map((t: any) => `${t.agent}: ${t.summary}`),
       success: true,
     });
 

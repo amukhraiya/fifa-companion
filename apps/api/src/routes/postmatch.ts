@@ -87,10 +87,10 @@ postMatchRouter.get('/achievements', async (req: AuthenticatedRequest, res: Resp
   try {
     const stats = fanStatsEngine.computeStats(userId);
     const achievements = achievementEngine.evaluateAchievements(stats);
-    const unlocked = achievements.filter((a) => a.unlocked);
+    const unlocked = achievements.filter((a: any) => a.unlocked);
 
     if (unlocked.length > 0) {
-      eventBus.publish('AchievementUnlocked', { userId, count: unlocked.length, achievements: unlocked.map((a) => a.id) });
+      eventBus.publish('AchievementUnlocked', { userId, count: unlocked.length, achievements: unlocked.map((a: any) => a.id) });
     }
 
     res.status(200).json({ success: true, data: { achievements, unlocked: unlocked.length, total: achievements.length } });
@@ -111,7 +111,7 @@ postMatchRouter.get('/statistics', async (req: AuthenticatedRequest, res: Respon
   try {
     const stats = fanStatsEngine.computeStats(userId);
     const achievements = achievementEngine.evaluateAchievements(stats);
-    stats.achievementsUnlocked = achievements.filter((a) => a.unlocked).length;
+    stats.achievementsUnlocked = achievements.filter((a: any) => a.unlocked).length;
 
     res.status(200).json({ success: true, data: stats });
   } catch (err: unknown) {
